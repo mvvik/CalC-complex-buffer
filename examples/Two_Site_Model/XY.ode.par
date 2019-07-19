@@ -1,0 +1,56 @@
+%**********************************************************************************
+%
+%                  CalC version 4.3.0, script "XY.ode.par"
+%                     Victor Matveev, February 26, 2002
+%
+%        Supplemental material for the Letter to the Editor of Biophys. J.
+%           "New and Corrected Simulations of Synaptic Facilitation"
+%                    by V. Matveev, A. Sherman and R. Zucker
+%
+% This CalC script implements the Ca2+ binding schemes for the secretory (X)
+% and facilitation (Y) sensors of the model by Tang et al. (2000), p. 2743.
+%
+% This script is used by the main parent scripts "STF.growth.par",
+% "STF.decay.stage1.par" and "STF.decay.stage2.par"
+%
+%**********************************************************************************
+ 
+% We denote [Ca2+] at the X-site as "CaX", and [Ca2+] at the Y-site as "CaY"; these
+% two variables are defined in the scripts describing the reaction-diffusions PDEs
+% ("quoted.pde.par", "actual.pde.par", "modified.pde.par" and "tortuosity.pde.par).
+ 
+ 
+% 1. First, we define the equations for the secretory X-sensor (we denote "C X" by "CCX"
+% and so forth):                                                            2
+ 
+dCX/dt   = - koff CX + 3 kon X CaX - 2 kon CX CaX + 2 koff CCX
+dCCX/dt  = 2 kon CX CaX - 2 koff CCX - kon CCX CaX + 3 koff CCCX
+dCCCX/dt = kon CCX CaX - 3 koff CCCX
+ 
+X  := 1 - CX - CCX - CCCX                 % Conservation constraint for the X-sensor
+CX(0) = 0  ;  CCX(0) = 0  ;  CCCX(0) = 0  % Initial conditions
+ 
+ 
+% 2. Next, we define the equation for the facilitation Y-sensor:
+ 
+dCY/dt = Y.kon CaY ( 1 - CY ) - Y.koff CY
+CY(0) = 0
+ 
+ 
+% 3. Finally, the equation for the release rate:
+ 
+dRelease/dt = k2 CCCX CY - k3 Release
+Release(0) = 0
+ 
+ 
+% 4. Now we define the rate constants in the above system of equations (Y.kon will be
+% redefined for the simulations with tortuosity, Figs. 2D and 3D; in that case the
+% Y-sensor affinity is changed to 9 uM)
+ 
+koff = 100     ;  kon = 0.5      % For the X-sensor affinity = koff / kon = 200 uM
+Y.koff = 0.555 ;  Y.kon = 0.185  % For the Y-sensor affinity = Y.koff / Y.kon = 3 uM
+k2 = 1         ;  k3 = 10        % These define kinetics of the release rate variable
+ 
+%==================================================================================
+%                                  T H E   E N D
+%==================================================================================

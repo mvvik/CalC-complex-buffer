@@ -1,0 +1,91 @@
+%*******************************************************************************
+%                     Calcium solver, version 5.4.5
+%                   Victor Matveev,  matveev@njit.edu
+%                   New Jersey Institute of Technology
+%                            May 23, 2005
+%*******************************************************************************
+%
+%  This is an example script (parameter) file for the Calcium Calculator 
+%     program, demonstrating basic functionality of the CalC package.
+%
+%========================================================================
+
+
+volume 0 1 0 1 0 1    % Defines the diffusion volume, a cube of 1x1x1 micron
+
+obstacle a b a b a b  % There will be a diffusion barrier 
+a = 0.1 ; b = 0.3     % of size 0.2 x 0.2 x 0.2 micron (um), at a distance of
+                      % 0.1 um from each of the three boundaries
+
+grid N N N            % The spatial grid will have 30 nodes in each direction
+N = 30    
+
+stretch.factor = 1.05 % The grid will be non-uniform: each successive grid interval
+stretch x 0 0.3       % starting from coordinate 0.3 um along each of the 3  
+stretch y 0 0.3       % directions will be "stretched" by a factor of 1.05 (the two
+stretch z 0 0.3       % values after "stretch x(y,z)" define the interval where
+                      % the grid will be left uniform)
+
+Ca.D = 0.22           % The diffusion coefficient of calcium is 0.22 um^2/ms
+Ca.bgr = 0.1          % Initial calcium concentration is 0.1 uM (uM = micromolar)
+
+Ca.source 0 0 0       % Defines the calcium channel/source location: there
+                      % will be one channel located in the corner of the box
+                      % By symmetry, this is equivalent to having a channel
+                      % in the middle of the (z)boundary of a 2x2x1 micron box.
+
+Ca.bc Noflux Noflux ...   % Boundary conditions are reflective (Noflux) on x- and 
+      Noflux Noflux ...   % y-surfaces, and there are "Pump" boundary conditions
+      Pump Pump           % on z-surfaces, on the bottom and top "membranes"
+
+bc.define Pump 1 -0.2 0  % while "Noflux" b.c. is defined internally, "Pump" b.c. has
+                         % to be defined by the user. At the boundary, the normal derivative
+% satisfies the condition "d[Ca]/dn - q ([Ca] - [Ca]rest) = 0", with q=0.2, [Ca]rest=0.1. 
+% "q" is equal to the pump rate (in units of um/ms), divided by the diffusion coefficient.
+
+
+buffer Bm            % Introducing a buffer named "Bm"
+Bm.D  = 0.1          % Its diffusion coefficient is 0.1 um^2/ms,
+Bm.KD = 2            % its calcium affinity is 2 uM
+Bm.kminus = 0.1      % and calcium unbinding rate is 0.1/ms
+Bm.total  = 1000     % The total (bound + unbound) concentration of buffer is 1 mM
+Bm.bc all Noflux     % All boundary conditions are Noflux (this is the default,
+                     % so this line could be omitted).
+
+ca := Ca[c,c,c]      % Variable "ca" will track [Ca2+] at location (30,30,30) nm
+c = 0.03
+
+dS/dt = kOn ca (1-S) - kOff S            % This defines an ODE for dynamic variable "S" that
+kOn = 0.1                                % represents a fast calcium "sensor", binding Ca
+kOff = 20                                % at above location with rate 0.1/ms, and unbinding 
+S(0) = kOn Ca.bgr / (kOff + kOn Ca.bgr)  % with rate 20/ms. Initially, S = kOn Ca.bgr / (kOff + kOn Ca.bgr)
+
+Run adaptive 1       % This defines the simulation itself, which consists of 
+current = 0.1 pA     % a 1 ms open channel interval with a channel current of 0.1 pA,
+Run adaptive 4       % representing an action potential, and a 4 ms-long closed channel
+current = 0          % (rest) interval. An adaptive time-step method will be used.
+
+
+plot 1D Ca x 0.2 0.2  % plot of calcium concentration along the axis in x direction
+                      % passing through point (y=0.2 um, z=0.2 um)
+
+plot ca
+
+plot Bm[c,c,c]        % see what the buffer is doing at the same location as "ca"
+
+plot S                % Plot the "S" variable, which could represent the neurotransmitter
+                      % release rate in this simple model
+
+% Save the plots in files with prefix "demo.":
+
+plot.print "demo."
+
+% When using xmgr/xmgrace to view the results in real time, uncomment the next line,
+% and pipe the output into xmgr/xmgrace using "calc demo.par | xmgr -pipe".
+
+% plot.method xmgr
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   T H E   E N D   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+

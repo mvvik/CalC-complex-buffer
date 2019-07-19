@@ -1,0 +1,37 @@
+%**********************************************************************************
+%
+%                   CalC version 5.4.0, script "FCT_Fig4.par"
+%                       Victor Matveev, January 4, 2005
+%
+%                    "Facilitation through Buffer Saturation: 
+%                 Constraints on Endogenous Buffering Properties"
+%                      V. Matveev, A. Sherman and R. Zucker
+%                        Biophys. J. (2004) 86:2691-2709
+%
+%   This script reproduces Figs. 2 and 4 of the Manuscript; it accepts a
+% command-line parameter spesifying the total concentration of the buffer. For 
+% instance, run "calc FCT_Fig4.par 500" (or "calc FCT_Fig4.par 500 | xmgr -pipe")
+% to reproduce Figs. 2 and 4B.
+% 
+%**********************************************************************************
+
+path = ""                  % If running under Windows, specify here the path to the
+                           % directory containing the script imported below
+file = path "FCT_main.par"
+include file               % Import the simulation parameters from the main script,
+                           % which defines everything but the buffer's properties:
+
+Buffer.total = $2          % Concentration is given by the 2nd command-line parameter
+                           % (the 1st parameter, '$1', is the script filename itself)
+Buffer.D = 0.2             % Diffusion coefficient is 0.2 um^2/ms
+Buffer.KD = 0.5            % Affinity = 0.5 uM
+Buffer.kplus = 0.8         % Binding rate = 0.8 / (uM ms)
+
+plot Ca2                   % Plot [Ca2+] and [Buffer] concentrations at location "2"
+plot Buffer2
+
+% Uncomment one of the following, depending on your output preferences:
+
+% plot.print "FCT.Btotal" $2 "uM"  % Filename prefix will indicate the Btotal value  
+plot.method xmgr       
+% plot.method gl

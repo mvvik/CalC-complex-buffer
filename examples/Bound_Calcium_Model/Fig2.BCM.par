@@ -1,0 +1,78 @@
+%**********************************************************************************
+%
+%                   CalC version 5.5.9, script "Fig2.BCM.par"
+%                       Victor Matveev, October 9, 2006
+%
+%                    "Residual Bound Calcium Can Account for the 
+%                 Effects of Calcium Buffers on Synaptic Facilitation"
+%                      V. Matveev, R. Bertram and A. Sherman
+%               J. Neurophysiol. (2006) 96: doi:10.1152/jn.00101.2006
+% 
+%  This script reproduces Fig. 2 of the manuscript. Use Fura concentration as 
+%  command-line parameter (0 for Fig. 2): execute "calc Fig2.BCM.par 0"
+%__________________________________________________________________________________
+%
+
+Bf.kappa   = 50             % values from Table 1
+Bf.KD      = 10
+Bf.D       = 0.03
+Bs.KD      = 5
+Bf.kplus   = 0.5
+kappaTotal = 600
+Bs.kminus  = 0.0004
+dist       = 130 / 1000
+
+Bs.D  = Bf.D 
+Bs.kappa = kappaTotal - Bf.kappa
+
+F2.total = $2  % Command-line parameter
+
+%==================================================================================
+
+include "ode.BCM.par"
+include "pde.BCM.par"
+
+CaX    := Ca[dist, 0, 0.02]   % [Ca2+] at location XY (filled circle in Fig. 1)
+BfX    := Bf[dist, 0, 0.02]   % Fast buffer concentration at location XY (filled circle in Fig. 1)
+
+%==================================================================================
+
+I.AP = 0.153 pA       % Total charge equals I.AP + 0.2 * I.tail = 0.26 pA*ms (see Table 1)
+I.tail = 3.5 I.AP
+
+
+Run Adaptive 1.0  ; current I.AP    % channel open, 1ms
+Run Adaptive 0.2  ; current I.tail  % tail current, 0.2ms
+Run Adaptive 8.8  ; current 0       % channel closed, 8.8ms (total time = 10 ms)
+
+Run Adaptive 1.0  ; current I.AP    % channel open, 1ms
+Run Adaptive 0.2  ; current I.tail  % tail current, 0.2ms
+Run Adaptive 8.8  ; current 0       % channel closed, 8.8ms (total time = 10 ms)
+
+Run Adaptive 1.0  ; current I.AP    % channel open, 1ms
+Run Adaptive 0.2  ; current I.tail  % tail current, 0.2ms
+Run Adaptive 8.8  ; current 0       % channel closed, 8.8ms (total time = 10 ms)
+
+Run Adaptive 1.0  ; current I.AP    % channel open, 1ms
+Run Adaptive 0.2  ; current I.tail  % tail current, 0.2ms
+Run Adaptive 8.8  ; current 0       % channel closed, 8.8ms (total time = 10 ms)
+
+Run Adaptive 1.0  ; current I.AP    % channel open, 1ms
+Run Adaptive 0.2  ; current I.tail  % tail current, 0.2ms
+Run Adaptive 2.8  ; current 0       % channel closed, 8.8ms (total time = 4 ms)
+
+
+R1  max R  0  10     % First response maximum
+RN := R / R1         % Normalized response
+
+%==================================================================================
+
+plot.method xmgr
+
+plot CaX 
+plot CY1 
+plot CCX 
+plot BfX 
+plot CY2 
+plot RN  
+

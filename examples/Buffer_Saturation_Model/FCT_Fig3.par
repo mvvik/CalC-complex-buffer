@@ -1,0 +1,74 @@
+%**********************************************************************************
+%
+%                  CalC version 4.9.8, script "FCT_Fig3.par"
+%                       Victor Matveev, January 19, 2004
+%
+%                    "Facilitation through Buffer Saturation: 
+%                 Constraints on Endogenous Buffering Properties"
+%                      V. Matveev, A. Sherman and R. Zucker
+%                        Biophys. J. (2004) 86:2691-2709
+%
+%  This script produces the data for the parameter-sweep plots in Fig. 3, and 
+%  requires a command-line parameter specifying the Ca2+ unbinding rate 
+%  (Buffer.kminus). For instance, to reproduce Fig. 3A, execute:
+%
+%                            calc FCT_Fig3.par 0.4
+%                      
+%  the resulting file will be called "FCT_vs_Btotal_and_KD_koff0.4", and will
+%  consist of four data columns, in the format "Btotal KD P1 P5". Then start gnuplot,
+%  and type
+%           splot 'FCT_vs_Btotal_and_KD_koff0.4' u 1:2:($4/$3) w lines
+%        
+%  This will make a surface plot of the ratio of the 4th and 1st columns, equal to
+%  the P5/P1 value.
+%==================================================================================
+
+path = ""                  % If running under Windows, specify here the path to the
+                           % directory containing the script imported below
+file = path "FCT_main.par"
+include file               % Import the simulation parameters from the main script,
+                           % which defines everything but the buffer's parameters:
+
+%==================================================================================
+
+Buffer.kminus = $2         % The command-line parameter specifies the buffer-Ca2+
+                           % unbinding rate
+
+Buffer.D = 0.2             % Diffusion coefficient is 0.2 um^2/ms
+
+
+KDmin = Buffer.kminus      % Since KD = kminus / kplus, and the max binding rate is 1
+KDmax = KDmin * 6        
+dK = (KDmax - KDmin) / 20  % Allow 20 steps along the KD (vertical) axis
+
+BTmin = 40                 % The buffer concentration will be varied from 40 uM
+BTmax = 1200               % to 1.2 mM, with steps of 40 uM (30 steps total)
+dB = 40
+
+for Buffer.KD = KDmin to KDmax step dK     % Iterations over buffer affinity values
+                                           % (outside loop)
+for Buffer.total = BTmin to BTmax step dB  % Iterations over Btotal values
+                                           % (inside loop)
+%==================================================================================
+
+P1 max Ca2  0  3  % First peak [Ca2+] transient at site "2" (distance=60 nm)
+P5 max Ca2 40 43  % Last peak [Ca2+] transient at the same site
+
+% Expression forming the name of the file:
+
+outfile = "FCT_vs_Btotal_and_KD_koff" Buffer.kminus
+  
+if (Buffer.total == BTmin) then
+ if (Buffer.KD == KDmin) then print outfile ' '  % Initialize the file at first iteration
+ else
+   append outfile  ' '                           % Put an empty line after each outside
+ endif                                           % iteration
+endif
+
+% Output the following data into the above file at each iteration: 
+
+append outfile Buffer.total "  " Buffer.KD "  " P1 "  " P5
+
+verbose = 0   % Suppress all simulation status statements
+
+%==================================================================================

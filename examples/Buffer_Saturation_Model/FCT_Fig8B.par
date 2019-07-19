@@ -1,0 +1,88 @@
+%**********************************************************************************
+%
+%                 CalC version 5.1.0, script "FCT_Fig8B.par"
+%                       Victor Matveev, October 19, 2004
+%
+%                    "Facilitation through Buffer Saturation: 
+%                 Constraints on Endogenous Buffering Properties"
+%                      V. Matveev, A. Sherman and R. Zucker
+%                        Biophys. J. (2004) 86:2691-2709
+%
+%  This script produces the data for the parameter-sweep plots in Fig. 8B. Execute:
+%
+%                              calc FCT_Fig8B.par
+%                                             
+%  the resulting file will be called "FCT_vs_Btotal_and_DB", and will consist
+%  of 8 data columns, in the format "Btotal DB P1at1 P5at1 P1at2 P5at2 P1at3 P5at3",
+%  where "P1ati" is the size of the first [Ca2+] transient at site "i", etc. Then 
+%  start gnuplot, and type
+%
+%         set logscale xy 10
+%         splot 'FCT_vs_Btotal_and_DB' u 1:2:($6/$5) w lines
+%                             
+%  This will make a surface plot of the ratio of the 6th and 5st columns, equal to
+%  the P5/P1 value at site "2".
+%==================================================================================
+
+grid 12 12
+
+path = ""                  % If running under Windows, specify here the path to the
+                           % directory containing the script imported below
+file = path "FCT_main.par"
+include file               % Import the simulation parameters from the main script,
+                           % which defines everything but the buffer's parameters:
+
+%==================================================================================
+
+Buffer.kplus = 0.8            % Buffer-Ca2+ binding rate is 0.8/(uM ms)
+kappa = 500                   % Buffering capacity is 500
+
+Dmin  = log(1e-5)             % The buffer diffusion coefficient will vary from 1e-5 um^2/ms
+Dmax  = log(Ca.D)             % to the diffusion coefficient of Ca2+ (logarithmic scale)
+Dstep = (Dmax - Dmin) / 35    % There will be altogether 35 steps (36 distinct values) 
+
+BTmin  = log(10)              % The buffer concentration will be varied from 40 uM
+BTmax  = log(40000)           % to 40 mM (on a logarithmic scale)
+BTstep = (BTmax - BTmin) / 35 % There will be altogether 35 steps (36 distinct values)
+
+for BT.loop = 0 to 35 step 1     % Iterations over Btotal concentration 
+logBT = BTmin + BTstep * BT.loop % values: this is the outside loop
+Buffer.total = exp(logBT)        
+
+for D.loop = 0 to 35 step 1      % Loop over the buffer diffusion coefficient values
+logD = Dmin + Dstep * D.loop     % this is the inside loop
+Buffer.D = exp(logD)             
+
+Buffer.KD = Buffer.total / kappa        % Buffer affinity is determined by its
+                                        % concentration and total capacity
+
+%==================================================================================
+
+P1at1 max Ca1  0  3  % First peak [Ca2+] transient at site "1" (distance=20 nm)
+P5at1 max Ca1 40 43  % Last peak [Ca2+] transient at the same site
+
+P1at2 max Ca2  0  3  % First peak [Ca2+] transient at site "2" (distance=60 nm)
+P5at2 max Ca2 40 43  % Last peak [Ca2+] transient at the same site
+
+P1at3 max Ca3  0  3  % First peak [Ca2+] transient at site "3" (distance=100 nm)
+P5at3 max Ca3 40 43  % Last peak [Ca2+] transient at the same site
+
+% The output goes to a file:
+
+outfile = "FCT_vs_Btotal_and_DB"
+ 
+if (D.loop == 0) then
+ if (BT.loop == 0) then print outfile ' '  % Initialize the file at first iteration
+ else
+   append outfile  ' '                     % Put an empty line after each outside
+ endif                                     % iteration
+endif
+
+% Output the following data into the above file at each iteration: 
+
+append outfile Buffer.total "  " Buffer.D "  " ...
+               P1at1 "  " P5at1 "  " P1at2 "  " P5at2 "  " P1at3 "  " P5at3
+
+verbose = 0   % Suppress all simulation status statements
+
+%==================================================================================

@@ -1,0 +1,54 @@
+%**********************************************************************************
+%
+%                  CalC version 4.9.8, script "FCT_Fig9.par"
+%                       Victor Matveev, January 19, 2004
+%
+%                    "Facilitation through Buffer Saturation: 
+%                 Constraints on Endogenous Buffering Properties"
+%                      V. Matveev, A. Sherman and R. Zucker
+%                       Biophys. J. (2004) 86:2691-2709
+%
+%  This script produces the data for the parameter-sweep plots in Fig. 9A. It is  
+%  based on the "FCT_Fig5.par", corresponding to the mobile buffer case, and requires
+%  a command-line parameter specifying the buffering capacity (kappa0). To reproduce 
+%  Fig. 9A, execute
+%
+%                              calc FCT_Fig9.par 500
+%                                             
+%  the resulting file will be called "FCT_vs_Btotal_and_kon_fixed500", and will consist
+%  of 8 data columns, in the format "Btotal kon P1at1 P5at1 P1at2 P5at2 P1at3 P5at3",
+%  where "P1ati" and "P5ati" are the sizes of the 1st and 5th [Ca2+] transients at 
+%  site "i". Then start gnuplot, and type
+%
+%        splot 'FCT_vs_Btotal_and_kon_fixed500' u 1:2:($6/$5) w lines
+%                             
+%  This will make a surface plot of the ratio of the 6th and 5st columns, equal to
+%  the P5/P1 value at site "2".
+%==================================================================================
+% 
+%  See Fig. 5 for the explanation of the setting below:
+
+Buffer.D = 0.0             % Immobile buffer
+
+kmin = 0.025               % The binding rate will vary from 0.025/(uM ms)
+kmax = 0.5                 % to 0.5/(uM ms)
+dK   = 0.025               % with steps of 0.025/(uM ms)
+
+BTmin = 1000               % The buffer concentration will be varied from 1 mM
+BTmax = 22000              % to 22 mM, with steps of 1 mM (22 steps total)
+dB = 1000
+
+% Name of the output file (see FCT_Fig5.par):
+
+outfile = "FCT_vs_Btotal_and_kon_fixed" kappa 
+
+% Apart from the presence of a second buffer, the simulations are equivalent to 
+% the ones contained in "FCT_Fig5.par"
+
+path = ""                  % If running under Windows, specify here the path to the
+                           % directory containing the script imported below
+fname = path "FCT_Fig5.par"
+include fname              % Import the simulation parameters from the main script,
+                           % which defines everything but the buffer's parameters:
+
+%==================================================================================

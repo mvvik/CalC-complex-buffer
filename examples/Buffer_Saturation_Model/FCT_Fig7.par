@@ -1,0 +1,72 @@
+%**********************************************************************************
+%
+%                CalC version 5.4.0, script "FCT_Fig7.par"
+%                       Victor Matveev, January 4, 2005
+%
+%                    "Facilitation through Buffer Saturation: 
+%                 Constraints on Endogenous Buffering Properties"
+%                      V. Matveev, A. Sherman and R. Zucker
+%                      Biophys. J. (2004) 86:2691-2709
+%
+%  Execute "calc FCT_Fig7.par control" (or "calc FCT_Fig7.par control | xmgr -pipe") 
+%  to reproduce Figs. 6B and 7 (control curve - no Fura-2) of the Manuscript.
+%
+%  Execute "calc FCT_Fig7.par fura" (or "calc FCT_Fig7.par fura | xmgr -pipe") 
+%  to reproduce the Fura-2 curve in Fig. 7.
+% 
+%**********************************************************************************
+
+path = ""                   % If running under Windows, specify here the path to the
+                            % directory containing the script imported below
+file = path "FCT_main.par"
+include file                % Import the simulation parameters from the main script,
+                            % which defines everything but the buffer's parameters:
+
+Buffer.D = 0.2              % Diffusion coefficient is 0.2 um^2/ms
+Buffer.total = 700          % Concentration = 700 uM
+Buffer.KD = 1.4             % Affinity = 1.4 uM
+Buffer.kplus = 0.5          % Binding rate = 0.5 / (uM ms)
+
+control = 0; fura = 1;      % dummy constants corresponding to the two possible
+                            % command-line options
+
+if ($2 == fura) then        % If the command-line argument is "fura", then
+   buffer Fura              % define the second buffer, Fura-2
+   Fura.D = 0.118           % Diffusion coefficient is 0.118 um^2/ms
+   Fura.total = 200         % Concentration = 200 uM
+   Fura.KD = 0.360          % Affinity = 360 nM
+   Fura.kplus = 0.27        % Binding rate = 0.27 / (uM ms)
+endif
+
+plot  Ca1                   % Plot [Ca2+] concentration at the three locations 
+plot  Ca2                   % (see Fig. 6B)
+plot  Ca3
+
+% Now, since release is quantified as the fourth power of [Ca2+], to calculate
+% facilitation we need to measure the peaks in Ca2+ concentration achieved for
+% each of the five pulses:
+
+P1 max Ca2 0  3    % peak [Ca2+] at site #2 achieved at the first AP 
+P2 max Ca2 10 13   % .. and so on for the other 4 pulses in the train. The reason
+P3 max Ca2 20 23   % the maximum is tracked over a period of three ms is that, if 
+P4 max Ca2 30 33   % the buffer is fixed, the [Ca2+] peak may significantly lag 
+P5 max Ca2 40 43   % behind the end of the square ICa pulse.
+
+% At the end of the simulation, the following print statements will print out the
+% STF for each of the last four pulses in the five-pulse train (see Eq. 9)
+
+print  "Facilitation at the 2nd pulse = " (P2/P1)^4 - 1 
+append "Facilitation at the 3rd pulse = " (P3/P1)^4 - 1 
+append "Facilitation at the 4th pulse = " (P4/P1)^4 - 1 
+append "Facilitation at the 5th pulse = " (P5/P1)^4 - 1 
+
+print.file = stderr  % Designate the terminal for the output 
+
+% Uncomment one of the following, depending on your plotting preferences, to see
+% the Ca2+ concentration traces:
+
+% plot.print "FCT."   % Specifies the prefix for all output data files   
+% plot.method xmgr       
+% plot.method gl
+
+% The end

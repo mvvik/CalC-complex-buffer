@@ -1,0 +1,28 @@
+%**********************************************************************************
+%
+%                CalC version 4.9.8, script "calculator.par"
+%                     Victor Matveev, January 14, 2004
+%
+%         Prints out logarithms and cosines of integers from 1 to 10
+%
+%**********************************************************************************
+%
+% This script does not contain any simulations, but demonstrates that CalC can be 
+% used as a simple calculator, and introduces the "for" and "print" statements
+
+for i = 1 to 10 step 1  % This statement can appear anywhere in the file. Note that
+                        % there's no terminating statement: the whole file is 
+                        % re-interpreted with each iteration
+
+cosi = cos(i)           % Introducing a constant
+
+print.file = stdout     % All print statements will print to the terminal 
+
+print "Logarithm of " i " is " log(i)   % Print natural log of i
+print "Cosine of " i " is " cosi        % Now print cosine of i
+
+% Print arguments are converted to strings and concatenated
+% Use "append" instead of "print" when writing to a file (otherwise the file 
+% gets over-written).
+%
+% That's about all

@@ -1,0 +1,169 @@
+%**********************************************************************************
+%
+%                CalC version 5.4.0, script "STF.growth.par"
+%                     Victor Matveev, January 4, 2005
+%
+%      Supplemental material for the Letter to the Editor of the Biophys. J.
+%           "New and Corrected Simulations of Synaptic Facilitation"
+%                      V. Matveev, A. Sherman and R. Zucker
+%__________________________________________________________________________________
+%
+%   This simulation script demonstrates the response of the model of Tang et al.
+% to a 5-pulse train, as shown in Figs. 1 and 2 (B-D) of the Letter. The script 
+% requires two command-line arguments:
+%
+% 1. The 1st argument specifies the parameter set to be used, and accepts values of
+%     "A"  - to use the quoted parameter set
+%     "B"  - to use the actual parameter set
+%     "C"  - to use the modified set
+%     "D"  - to use the parameter set with tortuosity
+%   
+% 2. The 2nd argument specifies whether Fura-2 should be included:
+%     "with" or "w"      - to run a simulation with Fura-2 included
+%     "without" or "wo"  - to run a control simulation (without Fura-2)
+%
+% For example, to reproduce the control curve of Fig. 2D of the Letter, enter
+%
+%      calc STF.growth.par D without
+%
+% or, if using the xmgr(ace) data plotting application:
+%
+%      calc STF.growth.par D without | xmgr -pipe 
+%__________________________________________________________________________________
+%
+%  Units are: micrometers for space, ms for time, microM for concentration,
+%  and 1e-12 mole/ms for current (one can also use the conversion constant "pA" 
+%  which is predefined for convenience)
+%
+%  Definitions in the script may be included in arbitrary order.
+%
+%
+%**********************************************************************************
+%          1 .   R E A D   I N   S I M U L A T I O N   S C R I P T S :
+%**********************************************************************************
+
+% The next two lines simply define constants corresponding to different argument
+% choices (we have to do this since boolean operations on strings are not yet
+% implemented ):
+
+A = 1; B = 2; C = 3; D = 4            
+w = 1; with = 1; without = 2; wo = 2;
+
+% Now read the reaction/diffusion part of the model corresponding to the 1st argument
+% (note that "$2" is the 1st command-line argument, "$3" is the 2nd argument, and so
+% forth; "$1" is the script name, and "$0" is the name of the program):
+
+path = ""  % The directory path where all the simulation scripts are stored
+
+quoted.script     = path "quoted.pde.par"
+actual.script     = path "actual.pde.par"
+modified.script   = path "modified.pde.par"
+tortuosity.script = path "tortuosity.pde.par"
+
+if ($2 == A) then include quoted.script   endif
+if ($2 == B) then include actual.script   endif
+if ($2 == C) then include modified.script endif
+
+if ($2 == D) then               % For the parameter set with tortuosity, the affinity
+  include tortuosity.script     % of the Y-site is 9 uM, not 3 uM as defined in the
+  Y.kon = Y.koff / 9            % script "XY.ode.par" included below. It is important
+endif                           % that Y.kon is redefined before the include statement:
+                                % only the 1st definition of any constant is used;
+                                % later definitions are discarded. 
+
+% If the 2nd argument (given by "$3") is equal to "with" or "w", define the Fura-2
+% buffer (we only have to include the line "buffer F2", since all the properties of 
+% Fura-2 are already present in each of the "pde.par" files listed above):
+                                      
+if ($3 == with) then 
+  buffer F2
+endif
+
+% Now read the implementation of the Ca2+ binding part of the model from "XY.ode.par":
+
+ode.script = path "XY.ode.par"
+include ode.script
+
+%==================================================================================
+%          2 .   S I M U L A T I O N   R U N S  (cf p.2741 of Tang et al.)
+%==================================================================================
+ 
+% First, we must instruct the program to intialize the kinetic X- and Y-variables to 
+% their steady-state values before solving the diffusion equations for Ca2+, because
+% at time zero the X- and Y- Ca2+ sensors should be in equilibrium with the background 
+% Ca2+ concentration ([Ca2+] is represented in the X and Y equations in "XY.ode.par" 
+% by variables CaX and CaY, which are defined in each of the "pde.par" files):
+
+equilibrate
+ 
+% Now we define the simulation itself, as a sequence of runs with different current
+% values, describing five action potentials presented at 100 Hz (current amplitudes 
+% "I.AP" and "I.tail" are defined in the "pde.par" files):
+
+Run adaptive 1.0  ; current = I.AP    % Channel open for 1ms during action potential
+Run adaptive 0.2  ; current = I.tail  % Tail current for 0.2ms
+Run adaptive 8.8  ; current = 0       % Channel closed for 8.8ms (total time = 10 ms)
+Run adaptive 1.0  ; current = I.AP    % Repeat the same sequence 5 times
+Run adaptive 0.2  ; current = I.tail  
+Run adaptive 8.8  ; current = 0   
+Run adaptive 1.0  ; current = I.AP  
+Run adaptive 0.2  ; current = I.tail  
+Run adaptive 8.8  ; current = 0   
+Run adaptive 1.0  ; current = I.AP  
+Run adaptive 0.2  ; current = I.tail  
+Run adaptive 8.8  ; current = 0   
+Run adaptive 1.0  ; current = I.AP
+Run adaptive 0.2  ; current = I.tail
+Run adaptive 18.8 ; current = 0  
+ 
+%==================================================================================
+%                      3 .   D A T A   O U T P U T
+%==================================================================================
+
+ 
+% Introducing a variable tracking the peak release rate during the 1st action potential
+% (the "Release" variable is defined in "XY.ode.par"):
+
+R1 peak Release 0 1.2
+
+% The following variable corresponds to the release rate normalized to the peak response 
+% during the 1st AP:
+
+Facilitation := Release / R1 - 1 
+
+% Now specify the data to plot:
+
+plot CaX             % plot [Ca2+] at the secretory sensor
+plot CaY             % plot [Ca2+] at the facilitation sensor
+
+plot Release         % plot the secretion rate profile
+plot Facilitation    % plot the normalized release rate (facilitation)
+
+% (Recall that the variables "CaX" and "CaY" are defined in each of the "pde.par" files)
+
+% To write the data sets (specified by all "plot" commands) to a disc file, specify the 
+% path or file prefix:
+
+  plot.print $1 "."  % Data file names will be prefixed by the name of this script file
+                     % ("$1" indicates the 1st command-line argument, which is the
+                     % script file name itself, of course) 
+
+% When using xmgr/xmgrace graphics application, uncomment the following line:
+ 
+% plot.method xmgr
+
+% If data is piped into an xmgr application, label the plot with the names of the 2 
+% command-line arguments:
+
+if ($2 == A) then plot.string "A: quoted"    endif
+if ($2 == B) then plot.string "B: actual"    endif
+if ($2 == C) then plot.string "C: modified"  endif
+if ($2 == D) then plot.string "D: modified"  endif
+
+if ($3 == with) then plot.string "Simulation with Fura-2" 
+                else plot.string "Control simulation"
+endif
+
+%==================================================================================
+%                                  T H E   E N D  
+%==================================================================================

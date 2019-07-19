@@ -1,0 +1,115 @@
+%**********************************************************************************
+%
+%                   CalC version 5.4.0, script "FCT_main.par"
+%                       Victor Matveev, January 4, 2005
+%
+%                    "Facilitation through Buffer Saturation: 
+%                 Constraints on Endogenous Buffering Properties"
+%                      V. Matveev, A. Sherman and R. Zucker
+%                       Biophys. J. (2004) 86:2691-2709
+% 
+%     This file contains the main definitions used by all simulations,
+%     except for the buffer's parameters which are defined in the parent script.
+%__________________________________________________________________________________
+%
+%  Units are: micrometers (um) for space, ms for time, microM (uM) for concentration.
+%  Note that definitions appearing in a CalC script may be included in arbitrary order.
+%==================================================================================
+%
+% Geometry parameters are based on:
+% Tang et al. (2000), p.2741: Ave. bouton diameter = 3 um
+% (Biophys J 78: 2735-2751)   Active zone diameter 160 nm
+%                             AZ lies in the center of a 2.56 um^2 area = pi (0.9 um)^2
+
+geometry = conical     % Conical geometry: see Fig. 1.
+                       % This instructs CalC to solve the equations in spherical 
+                       % coordinates (radius - polar theta angle).
+
+AZ.R = 0.08            % radius of the AZ (80 nm)
+S.R = 0.9              % radius of the cone's base (900 nm)
+R = 3 / 2              % radius of the bouton (1.5 um)
+
+Theta = S.R / R;       % Angle corresponding to the conical volume edge (Fig. 1, bottom)
+Alpha = AZ.R / R;      % Angle corresponding to the the active zone edge (Fig. 1, top)
+
+volume 0 R 0 Theta     % Defines the conical volume in Fig. 1
+
+Ca.source R 0 0 Alpha  % Ca2+ source is centered at the vertex ( (R,0) in spherical
+                       %  coordinates), and has an angular span of Alpha  
+
+current.shape square   % Specifies that the current is distributed uniformly over
+                       % the area defined by the Alpha angle in the Ca.source statement 
+                       % above, and is zero outside of that area (i.e., as opposed 
+                       % to a smooth gaussian distribution).
+
+grid 36 36             % Enough for an accuracy of a few percent
+                       % The grid is non-uniform, and is denser near the active zone:
+stretch.factor = 1.05  % Multiplication factor for each successive grid interval.
+stretch r R R          % In "stretch (r,theta) A B", [A,B] is the interval of minimal
+stretch theta 0 Alpha  % grid spacing; grid spacing is increased outside of [A,B]
+
+%==================================================================================
+
+buffer Buffer  % This introduces the endogenous buffer, and gives it a name "Buffer" (duh!)
+               % Buffer parameters will be defined in the parent script
+
+%==================================================================================
+
+% Now define variables tracking [Ca2+] and [Buffer] at locations labeled "1" 
+% through "3" in Fig. 1 (top inset)
+
+depth = R - 0.02         
+th1 = (AZ.R + 0.02) / R  % Angle coordinate of location "1", 20 nm lateral to AZ edge
+th2 = (AZ.R + 0.06) / R  % Angle coordinate of location "2", 60 nm lateral to AZ edge
+th3 = (AZ.R + 0.10) / R  % Angle coordinate of location "3", 100 nm lateral to AZ edge
+
+% Actually, in above we should have divided by "depth", not "R", but this has little 
+% effect on the results
+
+Ca1 := Ca[depth,th1] ; Buffer1 := Buffer[depth,th1] 
+Ca2 := Ca[depth,th2] ; Buffer2 := Buffer[depth,th2] 
+Ca3 := Ca[depth,th3] ; Buffer3 := Buffer[depth,th3]  
+
+%==================================================================================
+
+Ca.D   =  0.22    % this defines the Ca diffusion coefficient (0.22 um^2/ms)
+Ca.bgr =  0.0     % background Ca concentration = 0
+
+M      = 0.01           % Pump rate, in um / ms (Methods, p. 7)
+K_PUMP = 0.2            % Pump affinity, uM (ibid)
+
+A = - M / Ca.D / K_PUMP % Constant that appears in the pump boundary condition 
+                        % (see the CalC manual and Eq. 5 of the manuscript) 
+
+Ca.bc Noflux Pump Noflux Noflux  % Only the top z-surface has a pump
+bc.define Pump 1 A 0 K_INV       % See CalC manual for b.c. definition syntax
+K_INV = 1 / K_PUMP                  
+
+%==================================================================================
+
+% Current per active zone (Note: "ICa" is a reserved keyword, that's why we use "I.Ca")
+
+I.Ca = 11.7 pA  
+
+% This value is the same as the one used in Tang et al. (2000), translated to 
+% the case of a 1 ms-long square pulse.
+
+% Finally, the simulation statements: five 1 ms-long pulses at 100 Hz, which
+% yields an interpulse interval of 9 ms. 
+
+fivePulse = 1                      % Unless constant "fivePulse" is redefined in the
+                                   % parent script, simulate a five-pulse train:
+if (fivePulse) then
+   Run adaptive 1.0; current I.Ca  % 1 ms-long channel opening
+   Run adaptive 9.0; current 0     % Interpulse interval
+   Run adaptive 1.0; current I.Ca  % Repeat five times
+   Run adaptive 9.0; current 0
+   Run adaptive 1.0; current I.Ca
+   Run adaptive 9.0; current 0
+   Run adaptive 1.0; current I.Ca
+   Run adaptive 9.0; current 0
+   Run adaptive 1.0; current I.Ca
+   Run adaptive 3.0; current 0
+endif
+
+%==================================================================================

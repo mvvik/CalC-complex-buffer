@@ -1,0 +1,78 @@
+%**********************************************************************************
+%
+%                 CalC version 4.9.8, script "FCT_Fig10.par"
+%                       Victor Matveev, January 19, 2004
+%
+%                    "Facilitation through Buffer Saturation: 
+%                 Constraints on Endogenous Buffering Properties"
+%                      V. Matveev, A. Sherman and R. Zucker
+%                        Biophys. J. (2004) 86:2691-2709
+%
+%  Run "calc FCT_Fig10.par" to reproduce the spatial [Ca2+] and [buffer] 
+%  profiles in Fig. 10 of the Manuscript.
+% 
+%**********************************************************************************
+fivePulse = 0               % Instruct the imported script "FCT_main.par" not to
+                            % simulate the full 5-pulse train
+
+path = ""                   % If running under Windows, specify here the path to the
+                            % directory containing the script imported below
+file = path "FCT_main.par"
+include file                % Import the simulation parameters from the main script,
+                            % which defines everything but the buffer's parameters:
+
+Buffer.D = 0                % Endogenous buffer is fixed
+Buffer.total = 11000        % Concentration = 11 mM
+Buffer.KD = 22              % Affinity = 22 uM
+Buffer.kplus = 0.2          % Binding rate = 0.2 / (uM ms)
+
+%==================================================================================
+
+DT = 0 0.02 0.2 1 2 5 10 20  % This is an array of time values (in ms) for which the 
+                             % Ca2+ and buffer concentration profiles are to be saved.
+
+for iter = 1 to DT{0} step 1 % This script will be run several times, once for every 
+                             % trace to be produced. This is necessary to control 
+                             % precisely the time interval at which the concentration
+                             % profiles will be saved. The zero array element gives
+                             % the number of elements in the array (DT{0}=8)
+
+Export  delta 'dump'  % At each iteration, export the simulation state into the "dump"
+                      % at time delta (see below); this data will initialize the 
+                      % simulation at the next iteration
+
+if (iter == 1) then   % First iteration: simulate the 1ms-long ICa influx period,
+  Run adaptive 1      % and save the simulation into the dump file at time delta=1ms
+  current I.Ca        % (time=1ms is the end of the simulation)
+  delta = 1
+else                  % At each successive iteration, import the data, and run the  
+  Import 'dump'       % zero-current simulation corresponding to the post-pulse 
+  old = iter - 1                  % interval specified by the corresponding element
+  delta = DT{iter} - DT{old}      % in the DT array. Old value of post-pulse interval
+  Run adaptive delta; current 0   % has to be subtracted, since that value corresponds 
+endif                             % to the start time of the current iteration
+
+plot.1D.steps = 1     % This instructs the output statements below to save the "1D"
+                      % concentration fields at the end of each simulation only.
+
+% The "plot" statements below save the Ca2+ and buffer concentrations along the
+% "theta" axis. Parameter "depth" (defined in FCT_main.par") is the fixed 
+% radial coordinate, corresponding to the line connecting locations "1" through "3"
+% in Fig. 1
+
+plot 1D.mute Ca     theta depth Ca.file % These statements plot the Ca2+ and buffer 
+plot 1D.mute Buffer theta depth B.file  % concentrations
+
+% Since above plots are of "mute" type, the concentrations will be saved in a file
+% specified by strings "Ca.file" and "B.file", which are given by:
+
+Ca.file = 'Fig10.Ca.' DT{iter} 'ms'   % Append the post-pulse interval duration as the
+B.file  = 'Fig10.B.'  DT{iter} 'ms'   % file name suffix
+
+% The resulting files are two column files, with the first column specifying the
+% distance, and the second column giving concentration in units of uM. One can view 
+% them, for instance, using gnuplot, i.e. "plot 'Fig10.Ca.1ms' w lines".
+
+verbose = 0           % Suppress simulation status statements 
+
+%==================================================================================

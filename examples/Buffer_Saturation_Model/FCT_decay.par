@@ -1,0 +1,150 @@
+%**********************************************************************************
+%
+%                CalC version 4.9.8, script "FCT_decay.par"
+%                       Victor Matveev, January 16, 2004
+%
+%                    "Facilitation through Buffer Saturation: 
+%                 Constraints on Endogenous Buffering Properties"
+%                      V. Matveev, A. Sherman and R. Zucker
+%                       Biophys. J. (2004) 86:2691-2709
+%
+%  This script reproduces the decay time course of facilitation shown in Fig. 12
+%  It requires two command-line parameters: 
+%
+%  1. The first argument accepts values of "A" and "B", corresponding to the mobile
+%     and the fixed buffer cases, respectively. 
+%
+%  2. The second argument accepts values of "control" and "fura", and specifies
+%     whether Fura-2 should be included in the simulation.
+%
+%  To reproduce, for example, the Fura-2 data in Fig. 12 B, execute:
+%
+%                      calc  FCT_decay.par  B  fura
+%                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+%**********************************************************************************
+fivePulse = 0               % Instruct the imported script "FCT_main.par" not to
+                            % simulate the full 5-pulse train
+
+control = 0; fura = 1;      % dummy constants corresponding to the two possible
+A = 0; B = 1;               % values of the two command-line arguments
+
+if ($2 == A) then           % If the command-line argument is "A", then the buffer 
+   Buffer.D = 0.2           % is mobile: diffusion coefficient is 0.2 um^2/ms
+   Buffer.total = 700       % Concentration = 700 uM
+   Buffer.KD = 1.4          % Affinity = 1.4 uM
+   Buffer.kplus = 0.5       % Binding rate = 0.5 / (uM ms)
+   K_PUMP = 5               % Redefine the pump parameters (see p. 18). This overrides
+   M = 5                    % the corresponding definitions in "FCT_main.par"
+   option1 = 'mobile'
+else
+   Buffer.D = 0             % else: endogenous buffer is fixed
+   Buffer.total = 11000     % Concentration = 11 mM
+   Buffer.KD = 22           % Affinity = 22 uM
+   Buffer.kplus = 0.2       % Binding rate = 0.2 / (uM ms)
+   option1 = '.fixed'
+endif
+
+if ($3 == fura) then        % If the command-line argument is "fura", then
+   buffer Fura              % define the second buffer, Fura-2
+   Fura.D = 0.118           % Diffusion coefficient is 0.118 um^2/ms
+   Fura.total = 200         % Concentration = 200 uM
+   Fura.KD = 0.360          % Affinity = 360 nM
+   Fura.kplus = 0.27        % Binding rate = 0.27 / (uM ms)
+   option2 = '.fura'
+else
+   option2 = '.control'     % Strings 'option1' and 'option2' are appended to the
+endif                       % name of the output file (see below)
+
+path = ""                   % If running under Windows, specify here the path to the
+                            % directory containing the script imported below
+main = path "FCT_main.par"
+include main                % Import the simulation parameters from the main script,
+                            % which defines everything but the buffer's parameters.
+
+%==================================================================================
+
+DtArray = 9 20 30 40 50 60 70 80 100 150 200 250 300 400 ... % Array of values for
+          500 600 700 800 1000 1500 2000 3000 4000 5000      % the last interpulse
+                                                             % interval
+Dtn = DtArray{0}            % Number of elements in the array above (zeroth element
+                            % yields the number of array elements)
+
+for Dti = 1 to Dtn step 1   % Loop over the number of different interpulse intervals
+
+Dt = DtArray{Dti}           % Dt is the interval between 4th and 5th pulses at current
+                            % iteration
+%==================================================================================
+
+if Dti == 1 then   % The statements below are executed at the first iteration only:
+
+   Run adaptive 1  ; current I.Ca  % Simulate four 1 ms-long ICa pulses, at 100 Hz,
+   Run adaptive 9  ; current 0     % which yields an interpulse interval of 9 ms.
+   Run adaptive 1  ; current I.Ca  % I.Ca=11.7pA (defined in "FCT_main.par") 
+   Run adaptive 9  ; current 0  
+   Run adaptive 1  ; current I.Ca 
+   Run adaptive 9  ; current 0  
+   Run adaptive 1  ; current I.Ca 
+   Run adaptive Dt ; current 0     % The last interpulse interval is detemined by
+                                   % the first element in the array DtArray
+
+   P1 max Ca2 0 3  % Track the peak [Ca2+] transient at location "2" (60 nm from AZ edge),
+                   % achieved during the first pulse.
+
+
+   print 'temp.p1' 'P1=' P1    % At the end of the first iteration, store the value of
+                               % of the transient P1 in temporary file 'temp.p1'
+
+   saveTime = 31 + Dt          % The simulation state will be saved at the end of
+                               % the last interpulse interval "Dt", following the
+                               % train of four pulses, with a total duration of 31 ms
+%==================================================================================
+
+else        % The statements below are executed after the 1st iteration is complete
+
+   include 'temp.p1'           % Read the value of the first transient saved at
+                               % the end of the first iteration.
+
+   Import  'temp.fields'       % Import the simulation state saved at the end of
+                               % the previous simulation.
+
+   Dti_old = Dti - 1           
+   Dt_old = DtArray{Dti_old}   % Interval between 4th and 5th APs during previous iteration
+
+   saveTime = Dt  - Dt_old     % The length of this simulation
+
+   Run adaptive saveTime ; current 0  % Simulate the zero-current subinterval forming
+                                      % the interval between 4th and 5th pulses
+endif
+%==================================================================================
+
+% All statements outside of the "if..endif" block are performed at each iteration:
+
+Run adaptive 1 ; current I.Ca  % Finally, the 5th current pulse
+Run adaptive 2 ; current 0     % Wait two ms to make sure that [Ca2+] has reached its peak
+
+total = saveTime + 3  % Therefore, the total simulation time is given by "saveTime"
+                      % (see above) plus 1 ms plus 2 ms
+
+Export saveTime 'temp.fields' % Store the state of the simulation at the end of the "saveTime" 
+                              % (interpulse) interval, in the temporary file 'temp.fields' 
+
+P5 max Ca2 saveTime total     % "P5" tracks the amplitude of the 5th [Ca2+] transient
+                              % at location "2" (60 nm away from AZ edge)
+
+% Finally, print the facilitation value to file "outfile"
+
+outfile = "FCT_decay" option1 "Buffer" option2   % This forms the name of the output file
+
+if Dti == 1 then  print outfile Dt "  " (P5/P1)^4 - 1
+            else append outfile Dt "  " (P5/P1)^4 - 1
+endif
+
+% Also, print to the results to the console:
+
+print stderr "P1=" P1 " P5=" P5
+print stderr "Last interpulse interval = " Dt "  Facilitation = " (P5/P1)^4 - 1
+
+verbose = 0  % Suppress simulation status statements
+
+% The end
+%==================================================================================

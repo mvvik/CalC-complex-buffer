@@ -1,0 +1,367 @@
+Y2.tau = 300
+M = 0.04
+K_PUMP = 0.4
+
+verbose = 0
+%args =  ICarray{ICai} " " Bs.kappa " " Bf.KD " " Bf.D " " Bs.KD "    " Bf.kplus " " Bs.kminus " " dist
+
+Ca.bgr = 0.05
+
+I.Ca      = $3 pA
+Bf.kappa  = $4
+Bf.KD     = $5
+Bf.D      = $6
+Bs.KD     = $7
+Bf.kplus  = 0.5
+kappaTotal = $8
+Bs.kminus = 0.0004
+dist      = $2 / 1000
+X.KD = $9
+Y1.KD = $9
+Y2.KD = $9
+
+parString = "I\sCa\N=" $3 " \8k\4\ss\N=" Bs.kappa " K\sD\N\Sf\N=" Bf.KD " D\sB\N=" Bf.D ...
+            " k\Son\N\sf\N=" Bf.kplus " k\Soff\N\ss\N=" Bs.kminus " d=" dist " K\sD\N\SXY\N=" X.KD
+
+
+Bs.D  = Bf.D 
+Bs.kappa = kappaTotal - Bf.kappa
+
+%==================================================================================
+
+dir     =  "Dump/"
+prefix  = dir "check300_pump." $2 "." $3 "." $4 "." $5 "." $6 "." $7 "." $8 "." $9
+
+ICfile  =  "Data/ode_X2_YY.KD" X.KD "." Y1.KD "." Y2.KD ".IC"
+fmem    =  prefix ".temp"
+
+stdout  = prefix ".xmgr"
+dump180 =  prefix ".dump180"
+dump50  =  prefix ".dump50"
+dump40  =  prefix ".dump40"
+dump40F =  prefix ".dump40F"
+
+%==================================================================================
+
+include "ode_X2_YY.par" % "tang.double.par"
+include  ICfile
+include "3D_pde.par"
+
+
+CaX    := Ca[dist, 0, 0.02]
+BfX    := Bf[dist, 0, 0.02]
+CaX_F2 := Ca[dist, 0, 0.02]
+
+buffer D2
+D2.D = 0.1 
+D2.total = 200
+D2.KD = 0.150
+
+%==================================================================================
+
+Delay = 25
+decaySteps = 12
+
+%=========================
+
+for iter = 1 to 4 + 2 * decaySteps step 1
+
+if iter == 1 then
+
+	F2.total = 0
+	D2.kplus  = 1e-10
+
+	Export  40 dump40
+	Export  50 dump50
+
+   	include pulse10ms.par
+   	include pulse10ms.par
+   	include pulse10ms.par
+   	include pulse10ms.par
+   	include pulse10ms.par
+
+     	R1    max R      0  10
+     	C1    max CaX    0  10
+     	Y21   max CY2    0  10
+  	R2    max R      10 20
+  	R3    max R      20 30
+  	R4    max R      30 40 
+    T5  R5    max R      40 45
+     	C5    max CaX    40 45
+        MN    min R      41 42
+
+	append stdout "@ with g0"
+	append stdout "@ g0 on"
+	append stdout "@ s0 symbol size 0.8"
+	append stdout "@ g0.s0 point 1, 1"
+	append stdout "@ g0.s0 point 2, " R2/R1
+	append stdout "@ g0.s0 point 3, " R3/R1
+	append stdout "@ g0.s0 point 4, " R4/R1
+	append stdout "@ g0.s0 point 5, " R5/R1
+	append stdout "@ autoscale"
+
+	append stdout "@ with g1"
+	append stdout "@ s0 symbol size 0.8"
+	append stdout "@ g1 on"
+	append stdout "@ g1.s0 point 10, " R5/R1
+	append stdout "@ autoscale"
+	append stdout "@ redraw"
+
+	print fmem "R1=" R1 "; Y21=" Y21
+	append stdout "@ with g0"
+	append stdout "@ g0 on"
+	append stdout '@ subtitle "Residual=' MN/R1 ', C1=' C1 ', C5=' C5 '"' 
+	append stdout '@ subtitle size 0.7'
+
+	append stdout "@ with g1"
+	append stdout "@ g1 on"
+	append stdout '@ subtitle "' parString '"'
+	append stdout '@ subtitle size 0.75'
+
+ 	plot mute CaX  prefix ".CaX"
+ 	plot mute BfX  prefix ".BfX"
+ 	plot mute CY1  prefix ".CY1"
+ 	plot mute CY2  prefix ".CY2"
+ 	plot mute CCX  prefix ".CXX"
+ 	plot mute R    prefix ".R"
+
+endif
+
+
+%==================================================================================
+
+if iter > 1 && iter <= 1 + decaySteps then
+
+ 	include fmem
+
+        F2.total = 0
+	D2.kplus  = 1e-10
+
+	Import dump40
+   	Export Delay dump40
+
+   	Run Adaptive Delay   ; current 0
+   	Run Adaptive 1.0     ; current I.AP    % channel open, 1ms
+   	Run Adaptive 0.2     ; current I.tail  % tail current, 0.2ms
+   	Run Adaptive 3.8     ; current 0
+
+	finish = Delay + 5
+
+     	PR    max R    Delay finish
+     	PY    max CY2  Delay finish
+	
+	append stdout "@ with g1"
+	append stdout "@ g1 on"
+	append stdout "@ g1.s0 point " 10 + Delay * (iter-1) ", " PR/R1
+	append stdout "@ autoscale"
+
+	append stdout "@ with g3"
+	append stdout "@ g3 on"
+	append stdout "@ g3.s0 point " 10 + Delay * (iter-1) ", " PY/Y21
+	append stdout "@ autoscale"
+	append stdout "@ redraw"
+endif
+
+%==================================================================================
+
+if iter == 2 + decaySteps then
+
+	D2.kplus  = 1e-10
+	F2.total  = 400
+
+	Export  40 dump40F
+
+   	include pulse10ms.par
+   	include pulse10ms.par
+   	include pulse10ms.par
+   	include pulse10ms.par
+   	include pulse10ms.par
+
+     	Rf1    max R      0  10
+     	Y2f1   max CY2    0  10
+  	Rf2    max R      10 20
+  	Rf3    max R      20 30
+  	Rf4    max R      30 40 
+    T5  Rf5    max R      40 45
+
+	append stdout "@ with g0"
+	append stdout "@ g0 on"
+	append stdout "@ s1 symbol size 0.8"
+	append stdout "@ g0.s1 point 1, 1"
+	append stdout "@ g0.s1 point 2, " Rf2/Rf1
+	append stdout "@ g0.s1 point 3, " Rf3/Rf1
+	append stdout "@ g0.s1 point 4, " Rf4/Rf1
+	append stdout "@ g0.s1 point 5, " Rf5/Rf1
+	append stdout "@ autoscale"
+
+	append stdout "@ with g1"
+	append stdout "@ g1 on"
+	append stdout "@ s1 symbol size 0.8"
+	append stdout "@ g1.s1 point 10, " Rf5/Rf1
+	append stdout "@ autoscale"
+	append stdout "@ redraw"
+
+	append fmem "Rf1=" Rf1 "; Y2f1=" Y2f1
+
+ 	plot mute CaX  prefix ".CaX.fura"
+ 	plot mute BfX  prefix ".BfX.fura"
+ 	plot mute CY1  prefix ".CY1.fura"
+ 	plot mute CY2  prefix ".CY2.fura"
+ 	plot mute CCX  prefix ".CXX.fura"
+ 	plot mute R    prefix ".R.fura"
+endif
+
+%==================================================================================
+
+if iter > 2 + decaySteps && iter <= 2 + 2 * decaySteps then
+
+ 	include fmem
+
+        F2.total = 400
+	D2.kplus  = 1e-10
+
+	Import dump40F
+   	Export Delay dump40F
+
+   	Run Adaptive Delay   ; current 0
+   	Run Adaptive 1.0     ; current I.AP    % channel open, 1ms
+   	Run Adaptive 0.2     ; current I.tail  % tail current, 0.2ms
+   	Run Adaptive 3.8     ; current 0
+
+	finish = Delay + 5
+
+     	PR    max R    Delay finish
+     	PY    max CY2  Delay finish
+	
+	append stdout "@ with g1"
+	append stdout "@ g1 on"
+	append stdout "@ g1.s1 point " 10 + Delay * (iter-2-decaySteps) ", " PR/Rf1
+	append stdout "@ autoscale"
+	append stdout "@ redraw"
+
+	append stdout "@ with g3"
+	append stdout "@ g3 on"
+	append stdout "@ g3.s1 point " 10 + Delay * (iter-2-decaySteps) ", " PY/Y2f1
+	append stdout "@ autoscale"
+	append stdout "@ redraw"
+endif
+
+%==================================================================================
+
+if iter == 3 + 2 * decaySteps then
+
+	include fmem
+
+	D2.kplus  = 1e-10
+	F2.total = 0
+
+	Import  dump50
+	Export  180 dump180 
+
+	Run Adaptive 190.0 ; current 0      % channel closed, 2.8ms (total time = 4ms)
+	include "pulse10ms.par"
+	Run Adaptive 490   ; current 0      % channel closed, 2.8ms (total time = 4ms)
+ 	include "pulse10ms.par"
+	Run Adaptive 490   ; current 0      % channel closed, 2.8ms (total time = 4ms)
+ 	include "pulse10ms.par"
+	Run Adaptive 490   ; current 0      % channel closed, 2.8ms (total time = 4ms)
+ 	include "pulse10ms.par"
+
+     	T1    max R   190  200
+     	T2    max R   690  700
+     	T3    max R  1190 1200
+     	T4    max R  1690 1700
+
+     	TY1    max CY2   190  200
+     	TY2    max CY2   690  700
+     	TY3    max CY2  1190 1200
+     	TY4    max CY2  1690 1700
+
+	append stdout "@ with g2"
+	append stdout "@ g2 on"
+	append stdout "@ s0 symbol size 0.8"
+	append stdout "@ g2.s0 point 0.01, " T1/R1
+	append stdout "@ g2.s0 point 0.51, " T2/R1
+	append stdout "@ g2.s0 point 1.01, " T3/R1
+	append stdout "@ g2.s0 point 1.51, " T4/R1
+
+	append stdout "@ with g2"
+	append stdout "@ g2 on"
+	append stdout "@ g2.s2 point 0.01, " TY1/Y21
+	append stdout "@ g2.s2 point 0.51, " TY2/Y21
+	append stdout "@ g2.s2 point 1.01, " TY3/Y21
+	append stdout "@ g2.s2 point 1.51, " TY4/Y21
+	append stdout "@ autoscale"
+	append stdout "@ redraw"
+
+ 	plot mute CaX  prefix ".CaX.noflash"
+ 	plot mute BfX  prefix ".BfX.noflash"
+ 	plot mute CY1  prefix ".CY1.noflash"
+ 	plot mute CY2  prefix ".CY2.noflash"
+ 	plot mute CCX  prefix ".CXX.noflash"
+ 	plot mute R    prefix ".R.noflash"
+
+endif
+
+
+%==================================================================================
+
+if iter == 4  + 2 * decaySteps then
+
+ 	include fmem
+
+        F2.total = 0
+	D2.kplus  = 0.4
+
+ 	Import dump180
+
+ 	Run Adaptive 10.0  ; current 0      % channel closed, 2.8ms (total time = 4ms)
+ 	include "pulse10ms.par"
+ 	Run Adaptive 490   ; current 0      % channel closed, 2.8ms (total time = 4ms)
+ 	include "pulse10ms.par"
+	Run Adaptive 490   ; current 0      % channel closed, 2.8ms (total time = 4ms)
+ 	include "pulse10ms.par"
+	Run Adaptive 490   ; current 0      % channel closed, 2.8ms (total time = 4ms)
+ 	include "pulse10ms.par"
+
+     	T1D    max R   10   20
+     	T2D    max R  510  520
+     	T3D    max R 1010 1020
+     	T4D    max R 1510 1520
+
+
+     	TY1    max CY2   10   20
+     	TY2    max CY2  510  520
+     	TY3    max CY2 1010 1020
+     	TY4    max CY2 1510 1520
+
+	append stdout "@ with g2"
+	append stdout "@ g2 on"
+	append stdout "@ g2.s1 point 0.01, " T1D/R1
+	append stdout "@ g2.s1 point 0.51, " T2D/R1
+	append stdout "@ g2.s1 point 1.01, " T3D/R1
+	append stdout "@ g2.s1 point 1.51, " T4D/R1
+	append stdout "@ autoscale"
+
+	append stdout "@ with g2"
+	append stdout "@ g2 on"
+	append stdout "@ g2.s3 point 0.01, " TY1/Y21
+	append stdout "@ g2.s3 point 0.51, " TY2/Y21
+	append stdout "@ g2.s3 point 1.01, " TY3/Y21
+	append stdout "@ g2.s3 point 1.51, " TY4/Y21
+	append stdout "@ autoscale"
+
+	append stdout "@ autoscale"
+	append stdout "@ redraw"
+
+ 	plot mute CaX  prefix ".CaX.diazo"
+ 	plot mute BfX  prefix ".BfX.diazo"
+ 	plot mute CY1  prefix ".CY1.diazo"
+ 	plot mute CY2  prefix ".CY2.diazo"
+ 	plot mute CCX  prefix ".CXX.diazo"
+ 	plot mute R    prefix ".R.diazo"
+
+endif
+
+
+%=================================================================================

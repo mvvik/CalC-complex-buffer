@@ -1,0 +1,39 @@
+%****************************************************************************
+%
+%                   CalC version 5.4.0, script "ode.par"
+%                     Victor Matveev, January 4, 2005
+%
+%          Integrate a simple system of ODEs: harmonic oscillator
+%
+%****************************************************************************
+
+% A system of two ODEs, with initial conditions:
+
+dX/dt =   Y ; X(0) = 0 
+dY/dt = - X ; Y(0) = 1 
+
+mode = ODE            % Have to instruct CalC that this is not a PDE system.
+Run 10.0              % Integrate the equations for time = 10
+
+% To control time step and accuracy, use the following modification of the above statement:
+% Run 10.0 0.01 1e-8  % Same as above, but integrate with dt=0.01 and error tolerance of 1e-8
+
+plot  X          
+plot  Y    
+
+% Now, let's also plot the deviation from exact solution:
+
+error.X := X - sin(t) % Notice the syntax: use ":=" for time-dependent auxiliary variable
+error.Y := Y - cos(t) % declarations. As you can tell, "." is allowed in variable name.
+
+plot  error.X    % Plot the error variables
+plot  error.Y    % If using xmgr, can list several variables in "plot"
+
+plot.print "output."  % Specifies the prefix for file names created for each of the plots
+
+% Uncomment one of the following if running on Linux or SGI platform:
+
+plot.method xmgr
+% plot.method gl
+
+% That's it!

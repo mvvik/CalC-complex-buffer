@@ -1,0 +1,258 @@
+%**********************************************************************************
+%
+%              CalC version 4.5.0, script "STF.decay.stage1.par"
+%                     Victor Matveev, September 10, 2002
+%
+%      Supplemental material for the Letter to the Editor of the Biophys. J.
+%           "New and Corrected Simulations of Synaptic Facilitation"
+%                      V. Matveev, A. Sherman and R. Zucker
+%__________________________________________________________________________________
+%
+% This simulation script prepares [Ca2+] data files necessary to compute the decay 
+% time course of facilitation elicited by a 5-pulse train, as a function of the 
+% interval between the last two pulses. The second script, "STF.decay.stage2.par",
+% uses these files to generate the decay time courses, shown in Fig. 3 of the
+% Letter. 
+%
+% This script requires 5 command-line arguments (1st two of which are the same 
+% as in "STF.growth.par"):
+%
+% 1. The 1st argument specifies the parameter set to be used, and accepts values of
+%     "A"  - to use the quoted parameter set
+%     "B"  - to use the actual parameter set
+%     "C"  - to use the modified set
+%     "D"  - to use the parameter set with tortuosity
+%   
+% 2. The 2nd argument specifies whether Fura-2 should be included:
+%     "with" or "w"      - to run a simulation with Fura-2 included
+%     "without" or "wo"  - to run a control simulation (without Fura-2)
+%
+% 3. The 3rd argument = the minimal interval between 4th and 5th pulses
+%
+% 4. The 4th argument = the maximal interval between 4th and 5th pulses
+%
+% 5. The 5th argument = number of data points between the above minimal and maximal
+%    inter-spike intervals for which to compute facilitation.
+%
+% 6. The 6th argument defines the path for the data
+%
+%
+%   For example, to reproduce the control curve of Fig. 3D of the Letter, execute
+% the following commands (see also script "STF.decay.stage2.par"):
+%
+%      calc STF.decay.stage1.par D without 10.0 800.0 25
+%      calc STF.decay.stage2.par D without 
+%
+% or, if using the xmgr(ace) data plotting application:
+%
+%      calc STF.decay.stage1.par D without 10.0 800.0 25
+%      calc STF.decay.stage2.par D without | xmgr -pipe 
+%
+%**********************************************************************************
+%                 T H E   A L G O R I T H M   S U M M A R Y :
+%                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+% I. At 1st iteration (iteration = 0), perform these steps:
+%
+%   1. Simulate 4 action potentials.
+%   2. Simulate the "silent" (zero-current) interval between the 4th and 5th APs,
+%      with the interval length corresponding to the 1st data point in the STF 
+%      decay time course curve
+%   3. At this point, save the entire simulation state to the binary "dump" file. 
+%   4. Simulate the last (5th) action potential.
+%   5. Throughout the above steps, save the [Ca2+] time course at X- and Y-sites to
+%      to the initial set of [Ca2+] data files.
+%
+% II. At each successive iteration ("n-th" iteration), do this:
+%
+%   1. Retreave the entire simulation state from the "dump" file, which was saved
+%      there at the previous iteration.
+%   2. Simulate the zero-current (silent) interval for the duration which, when
+%      combined with the last inter-spike interval in the previous iteration, adds
+%      up to the full interval between the 4th and 5th pulses corresponding to the
+%      current data point in the STF decay time course. 
+%   3. At this point, save the entire simulation state to the binary "dump" file.
+%      In the course of the simulation, this file will contain the state of the
+%      system at the end of the progressively increasing interval between the 4th
+%      and 5th pulses.
+%   4. Simulate the last (5th) action potential.
+%   5. Throughout the above steps, save the [Ca2+] time course at X- and Y-sites 
+%      to the [Ca2+] data files, corresponding to another data point in the STF
+%      decay time course.
+%
+% The resulting [Ca2+] files contain all the data needed by the second script,
+% "STF.decay.stage2.par", to produce the STF decay time course curve.
+%
+%==================================================================================
+%          1 .   R E A D   I N   S I M U L A T I O N   S C R I P T S :
+%==================================================================================
+
+% The next two lines simply define the constants corresponding to different user
+% argument choices (we have to do this since boolean operations on strings are not 
+% yet implemented):
+
+A = 1; B = 2; C = 3; D = 4            
+w = 1; with = 1; without = 2; wo = 2;
+
+% Define a string label for the parameter set corresponding to the 1st argument 
+% (note that "$2" is the 1st command-line argument, "$3" is the 2nd argument, and 
+% so forth; "$1" is the script name, and "$0" is the name of the program):
+
+path = ""  % The directory path where all the simulations scripts are stored
+
+if ($2 == A) then  paramSet = "quoted." ;     endif
+if ($2 == B) then  paramSet = "actual." ;     endif
+if ($2 == C) then  paramSet = "modified." ;   endif
+if ($2 == D) then  paramSet = "tortuosity." ; endif
+
+% Now read the reaction/diffusion part of the model corresponding to the 1st argument
+% (e.g., for choice "C", the included file is "modified.pde.par"):
+
+pde.file = path paramSet "pde.par" 
+include pde.file
+
+%==================================================================================
+%                 B A S I C   C O N S T A N T S ,   E T C . :
+%==================================================================================
+
+% If the 2nd argument (given by "$3") is equal to "with" or "w", define the Fura-2
+% buffer (we only have to include the line "buffer F2", since all the properties of 
+% Fura-2 are already present in each of the "pde.par" files listed above):
+                                      
+if ($3 == with) then  
+  buffer F2 
+  fString = "fura."      % a part of the filename prefix
+else
+  fString = "control."   % a part of the filename prefix
+endif
+
+% Now define the loop constants corresponding to arguments 3, 4 and 5:
+
+dt.first = $4 ; dt.last  = $5 ; dt.iterations = $6
+dt.step = (dt.last - dt.first) / dt.iterations      
+
+% Define the path to the directory where data files will be stored (remember to set 
+% the same path in the script "STF.decay.stage2.par". You may also choose to set it
+% using an additional command line argument, via statement "path = $7")
+
+path = "" 
+
+% Now define the full prefix for all file names (e.g., "folder/actual.fura."):
+
+prefix = path paramSet fString   % concatenation is implied
+
+% The following file will contain the entire simulation data, to be stored at the 
+% end of each iteration and retreaved at the beginning of the next iteration:
+
+dump.file = prefix "pde.dump" 
+
+log.file = prefix "log"   % This file will contain the values of constants "dt.first",
+                          % "dt.last", and "dt.iterations", defined above (these values
+                          % will be read by the "STF.decay.stage2.par" script).
+
+% The names of the [Ca2+] files will be formed by merging the file prefix, a suffix
+% string "CaX."/"CaY.", and the value of the current interval between 4th and 5th
+% action potentials ("dt.current" is the variable being increased in the main loop):
+
+CaX.file = prefix "CaX." dt.current "ms"
+CaY.file = prefix "CaY." dt.current "ms"
+
+%==================================================================================
+%                   M A I N   S I M U L A T I O N   L O O P :
+%==================================================================================
+
+% Now we begin our loop over the increasing values of the time interval between the
+% 4th and 5th pulses. The next statement is the main "for" loop command (notice that
+% there is no loop termination statement, because the "for" statement can appear only
+% once, and applies to this entire script; like almost all other statements, the 
+% "for" command can be put anywhere in the script file):
+
+for iteration = 0 to dt.iterations step 1    % <---  THE MAIN LOOP STATEMENT
+
+% Next define the interval between the 4th and 5th pulses for the current iteration:
+
+dt.current = dt.first + dt.step * iteration
+
+if iteration == 0 then    %=========================================================
+                          %  Instructions below are only performed at 1st iteration
+                          %=========================================================
+
+  % Instructions within each "if" clause may appear in any order (except for the "Run"
+  % statements), but for better code readability, they appear below in the order of 
+  % their chronological execution:
+
+  % Save the values of constants "dt.first", "dt.last", and "dt.iterations" in the
+  % "log.file" (these values will be needed by the "STF.decay.stage2.par" script):
+
+  print  log.file  "dt.first = " dt.first "; dt.last = " dt.last 
+  append log.file  "dt.iterations = " dt.iterations
+
+  % Now begin the main simulations steps
+:
+  % 1. Simulate the 4 action potential delivered at 100 Hz:
+
+  Run adaptive 1.0  ; current = I.AP    % Channel open for 1ms during action potential
+  Run adaptive 0.2  ; current = I.tail  % Tail current for 0.2ms
+  Run adaptive 8.8  ; current = 0       % Channel closed for 8.8ms (total time = 10 ms)
+  Run adaptive 1.0  ; current = I.AP    % Repeat the same sequence 5 times
+  Run adaptive 0.2  ; current = I.tail  
+  Run adaptive 8.8  ; current = 0   
+  Run adaptive 1.0  ; current = I.AP  
+  Run adaptive 0.2  ; current = I.tail  
+  Run adaptive 8.8  ; current = 0   
+  Run adaptive 1.0  ; current = I.AP  
+  Run adaptive 0.2  ; current = I.tail  
+
+  % 2. Simulate the silent interval corresponding to the 1st interpulse interval
+  % (we have to subtract the duration of an AP, equal to 1.2 ms, from "dt.first"):
+
+  interPulse = dt.first - 1.2
+ 
+  Run adaptive interPulse  ; current = 0   
+
+  % 3. At this point the entire simulation state will be saved in the binary "dump"
+  % file (this corresponds to time = 30 + dt.first after the simulation start):
+
+  saveTime = 30 + dt.first
+  Export saveTime dump.file
+
+else     % this else statement corresponds to "if iteration == 0"
+
+  %===================================================================
+  %  Instructions below are only performed at iteration > 0
+  %===================================================================
+
+  % 1. Retreave the simulation state from the "dump" file:
+
+  Import dump.file
+
+  % 2. Run the simulation with zero current, for the duration given by the
+  % difference between "dt.current" values at the current time step and the
+  % previous time step; this difference is equal to dt.step, of course:
+
+  Run adaptive dt.step ; current 0 
+
+  % 3. Save the simulation state at the end of the silent interval:
+
+  Export dt.step dump.file
+  
+endif      % this endif statement corresponds to "if iteration == 0" 
+ 
+%========================================================================
+%    Instructions below are performed for all iterations:
+%========================================================================
+
+% 4. Now run the last (5th) pulse:
+
+  Run adaptive 1.0  ; current = I.AP    % Channel open for 1ms during an AP
+  Run adaptive 0.2  ; current = I.tail  % Tail current for 0.2ms
+  Run adaptive 4.8  ; current = 0       % Continue for a little while after the pulse
+
+% 5. Save the [Ca2+] profiles in appropriate data files:
+
+plot mute CaX CaX.file
+plot mute CaY CaY.file
+ 
+%==================================================================================
+%                                  T H E   E N D  
+%==================================================================================
+

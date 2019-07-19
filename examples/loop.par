@@ -1,0 +1,97 @@
+%*******************************************************************************
+%                          Example of "for" cycle
+%                     Calcium solver, version 5.4.0
+%                   Victor Matveev,  matveev@njit.edu
+%                   New Jersey Institute of Technology 
+%                            January 4, 2005
+%*******************************************************************************
+%
+%  In this example the "for" loop is used to check the convergence of results 
+% as spatial resolution is increased; such a check should be a final part of any
+% simulation. The variable changed in the "for" loop is the number of grid
+% points along each of the three directions, and the tracked variable is the
+% [Ca2+] peak over the total simulation time at a specific location. There is 
+% only one Ca2+ channel, located at the origin (which by symmetry is equivalent to
+% a channel in a center of a surface 4 times the size specified by "volume"), and 
+% the simulation consists of a 1ms channel open period and a 2ms channel closed 
+% period.
+%
+%==================================================================================
+%                       1.  GEOMETRY  DEFINITIONS
+%==================================================================================
+
+volume 0 0.4 0 0.4 0 0.4     % Defines a 400 x 400 x 400 (nm) enclosure
+grid   N N N                 % Number of grid points is defined in the cycle:
+                             % see below
+
+stretch.factor = 1.05        % Use non-uniform grid
+stretch x 0 0                % Stretch the grid in all 3 directions, starting from
+stretch y 0 0                % the origin 
+stretch z 0 0       
+
+%==================================================================================
+%                   2.  CALCIUM  PARAMETERS  DEFINITIONS
+%==================================================================================
+
+Ca.D   =  0.22                     % diffusion coefficient (in um^2 / ms)
+Ca.bgr =  0                        % zero background calcium  
+Ca.source 0 0 0 0.005 0.005 0.005  % source at the origin, with a width of 5 nm
+
+Ca.bc Noflux Noflux Noflux Noflux Pump Pump 
+bc.define Pump 1 -0.224 0  % defines the boundary condition d[Ca]/dn - 0.224 [Ca] = 0
+
+%==================================================================================
+%                   3.  BUFFER  PARAMETERS  DEFINITIONS
+%==================================================================================
+
+buffer Bf           % defines buffer named "Bf" (for "fixed"),
+Bf.D  = 0           % with D=0      
+Bf.kplus = 0.1      % Ca binding rate = 0.1 / (microM ms)
+Bf.kminus = 1.6     % unbinding rate = 1.6 / ms
+Bf.total = 5000     % total concentration = 5 mM
+Bf.bc all Noflux    % No-flux on all sides, of course
+
+%==================================================================================
+%                   4.  CALCIUM  BINDING  KINETICS  (ODEs)
+%==================================================================================
+
+Max max Ca[0.05,0.05,0.05] 0 3.0  % Variable "Max" tracks the peak of [Ca2+]
+                                  % at point (x=0.05,y=0.05,z=0.05) during the 
+                                  % time range from 0 to 3 ms
+
+%==================================================================================
+%                       5.  SIMULATION  RUN  PARAMETERS            
+%==================================================================================
+
+Run adaptive 1.0    % Use the adaptive time-step method to run the simulation for 1 ms
+current = 0.2 pA    % using 0.2 pA current strength
+Run adaptive 2.0    % Integrate over the silent (zero current) interval of 2 ms
+current = 0.0       % 
+
+%==================================================================================
+%                            6.  CYCLE
+%==================================================================================
+
+for N = 6 to 30 step 2   % gradually increase the spatial resolution
+
+
+track Max        % watch the value of peak Ca[0.0,0.0,0.1] change
+track CA         % watch the value of Ca[0.0,0.0,0.1] at t = 3ms change
+
+CA := Ca[0,0,0.1]
+
+% You will notice that N=16 is enough for 2-3% accuracy in this case; of course, this
+% depends on parameters. Convergence is faster if the sourse size (here set to 5nm)
+% is increased, smoothing the source profile.
+
+% Save the plots in files with prefix "loop.":
+
+plot.print "loop."
+
+% When using xmgr/xmgrace to view the results in real time, uncomment the next line,
+% and pipe the output into xmgr/xmgrace using "calc loop.par | xmgr -pipe".
+
+% plot.method xmgr  % pipe the results into xmgr
+
+%====================================================================================
+

@@ -1,0 +1,132 @@
+%*******************************************************************************
+%
+%                      "markov.par" CalC simulation script
+%
+%                     "Calcium Calculator", version 5.4.0
+%                       Victor Matveev,  matveev@njit.edu
+%                          Dept of Math Sciences, NJIT
+%
+%                                January 4, 2005
+%
+%
+%  This example script demonstrates the use of stochastic Markov variables that
+%  simulate the gating of two nearby Ca2+ channels. 
+%
+%  A four-state channel model is used, from the following work:
+%  Nguyen V, Mathias R, and Smith GD (2004) A stochastic automata network descriptor
+%  for Markov chain models of instantaneously-coupled intracellular Ca2+ channels"
+%  Bull. Math. Bio. In press.
+%
+%=================================================================================
+
+volume 0 1 0 1 0 1    % Defines the diffusion volume, a cube of 1x1x1 micron
+
+grid N N N            % The spatial grid will have 26 nodes in each direction
+N = 26    
+
+Ca.D = 0.22           % The diffusion coefficient of calcium is 0.22 um^2/ms
+Ca.bgr = 0.1          % Initial calcium concentration is 0.1 uM (uM = micromolar)
+
+x1 = 0.45; x2 = 0.55  % The coordinates of two channels. The channels will lie
+y1 = 0.50; y2 = 0.50  % on the z=0 surface of the volume, separated by a distance of
+                      % 0.1 um in the "x" direction
+
+Ca.source x1 y1 0     % Defines the point calcium channel (source) location
+Ca.source x2 y2 0     
+                      
+Ca.bc Noflux Noflux ...  % Boundary conditions are zero-flux ("Noflux") on x- and 
+      Noflux Noflux ...  % y-surfaces, and there are "Pump" boundary conditions
+      Pump Pump          % on z-surfaces, on the bottom and top "membranes"
+
+bc.define Pump 1 -0.5 0  % while the zero-flux ("Noflux") b.c. is defined internally, the
+                         % negative-flux b.c. (which we call "Pump") has to be defined by 
+% the user. The derivative normal to the boundary satisfies the condition 
+%           d[Ca]/dn - q ([Ca] - [Ca]rest) = 0", with q=0.5, [Ca]rest=0.1. 
+% "q" is equal to the pump rate (in units of um/ms), divided by the diffusion coefficient.
+% The time constant of Ca clearance is given roughly by tau = V kappa / (D S q)
+% where V and S are the enclosure volume and area, respectively, D is the Ca diffusion
+% coefficient, and kappa is the buffering capacity. For q=0.5, tau is about 1 sec. 
+
+buffer Buf            % Introducing a buffer named "Buf"
+Buf.D  = 0.0          % Its diffusion coefficient is 0 (it is fixed)
+Buf.KD = 2            % its calcium affinity is 2 uM
+Buf.kminus = 0.1      % and calcium unbinding rate is 0.1/ms
+Buf.total  = 1000     % The total (bound + unbound) concentration of buffer is 1 mM
+Buf.bc all Noflux    %  All boundary conditions are zero-flux ("Noflux"): this is the default,
+                      % so this line could be omitted.
+
+stretch.factor = 1.04 % The grid will be non-uniform: each successive grid interval
+stretch x x1 x2       % going away from the box of denser grid defined by these three 
+stretch y y1 y2       % "stretch" commands will be stretched by a factor of 1.04 (the two
+stretch z 0 0         % values after each "stretch x(y,z)" define the interval where the
+                      % grid will be left uniform, for each of the three spatial directions).
+
+%==================================================================================
+
+Ca1 := Ca[x1,y1,r]    % Variables "Ca1" and "Ca2" will track [Ca2+] directly above the
+Ca2 := Ca[x2,y2,r]    % locations of the two channels, at a distance of
+r = 0.03              % 0.03 um (30 nm) away from the channel mouth
+
+channel_1 markov 4 0  % Defines the two 4-state Markov processes "channel_1" 
+channel_2 markov 4 0  % and "channel_2"
+
+channel_1.0.1 := Ca1^eta ka.plus     % The channel kinetics are taken directly from
+channel_1.1.2 := Ca1^eta kb.plus     % Nguyen et al. (Fig. 1 and Eqs. 6, 7)
+channel_1.2.3  = kc.minus
+channel_1.3.0  = kd.minus
+channel_1.0.3 := Ca1^eta kd.plus
+channel_1.3.2 := Ca1^eta kc.plus
+channel_1.2.1  = kb.minus
+channel_1.1.0  = ka.minus 
+
+channel_2.0.1 := Ca2^eta ka.plus 
+channel_2.1.2 := Ca2^eta kb.plus 
+channel_2.2.3  = kc.minus
+channel_2.3.0  = kd.minus
+channel_2.0.3 := Ca2^eta kd.plus
+channel_2.3.2 := Ca2^eta kc.plus
+channel_2.2.1  = kb.minus
+channel_2.1.0  = ka.minus 
+
+ka.plus = 0.5
+kb.plus = 0.001 
+kc.plus = 0.5
+kd.plus = 0.01
+ka.minus = 1
+kb.minus = 0.001 
+kc.minus = 1
+kd.minus := kd.plus (ka.minus/ka.plus) (kb.minus/kb.plus) / (kc.minus/kc.plus)  % =0.01: Eq. (7)
+
+eta = 1
+
+%==================================================================================
+
+seed = 87681932 % Randomization seed
+
+%==================================================================================
+
+Run 100 0.002    % This defines the simulation itself, a 100 ms long run with a time
+                 % step of 2 us (0.002 ms)
+currents I1 I2   % This defines the time-dependent variables which will yield
+                 % the magnitudes of the two defined Ca2+ sources
+
+I1 := 0.1 (channel_1 == 1) pA   % Ca2+ current variables defined using a Boolean expression;
+I2 := 0.1 (channel_2 == 1) pA   % its value is 0.1 pA when the channel is in the open state (state "1") 
+
+%==================================================================================
+
+plot.method xmgr  % Pipe the output of this program to xmgr graphics application
+
+plot  channel_1  
+plot  channel_2
+plot  Ca1
+plot  Ca2
+
+
+plot.print "data."  % Generate output files for each of the four defined plots, with 
+                    % a file prefix "data."
+
+verbose = 1  % Don't show the status cursor
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   T H E   E N D   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+

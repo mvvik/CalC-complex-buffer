@@ -1,0 +1,148 @@
+%**********************************************************************************
+%
+%                CalC version 5.4.0, script "YamadaZucker.par"
+%                     Victor Matveev, January 4, 2005
+%
+%  This script reproduces Fig. 3b from the paper by M. Yamada and R. Zucker,
+%  "Time course of transmitter release calculated from simulations of a calcium 
+%   diffusion model" (1992) Biophys J 61:671-682.
+%__________________________________________________________________________________
+%
+%==================================================================================
+%                       1.  GEOMETRY  DEFINITIONS
+%==================================================================================
+
+volume 0.0 0.965 0.0 0.965 0.0 2.0
+
+% Next line defines the grid (discretization of space) for the numerical solver.
+% The number of points along each of the three directions is 30. This grid size
+% guarantees a numerical accuracy of about 5 %
+
+grid N N N
+N = 30
+
+% To improve the spatial resolution, we use a non-uniform grid, with a higher
+% density of grid points close to the active zone (spatial gradients are the
+% largest in this region, so higher spatial resolution is required). The grid is
+% smoothly stretched in all directions away from the active zone; for a
+% given direction, each successive grid interval is given by a product of the
+% previous grid interval, and a factor slightly greater than one, defined by the
+% "stretch.factor" constant:
+
+stretch.factor = 1.05
+
+% The following "stretch" commands describe the region of space where the grid
+% points are dense. The grid is stretched in all 3 directions away from this region.
+% In this case, the dense region is a 400 nm by 400 nm patch in the xy-plane,
+% containing the 16 Ca2+ channels (see "Ca.source" definitions above)
+
+stretch x 0.0 0.4
+stretch y 0.0 0.4
+stretch z 0.0 0.0
+
+%==================================================================================
+%                   2.  CALCIUM  PARAMETERS  DEFINITIONS
+%==================================================================================
+
+
+Ca.D = 0.6    % The Ca2+ difussion coefficient (in units of um^2/ms)    
+
+Ca.bgr = 0.0  % Background Ca2+ concentration = 0
+
+sigma = 0.01  % half-width of the spatial channel current density (see "Ca.source"
+              % definitions below; allowing a non-point current source increases 
+              % the spatial accuracy of the method
+
+
+
+Ca.source 0.05 0.05 0 sigma sigma sigma
+Ca.source 0.05 0.15 0 sigma sigma sigma
+Ca.source 0.05 0.25 0 sigma sigma sigma
+Ca.source 0.05 0.35 0 sigma sigma sigma
+Ca.source 0.15 0.05 0 sigma sigma sigma
+Ca.source 0.15 0.15 0 sigma sigma sigma
+Ca.source 0.15 0.25 0 sigma sigma sigma
+Ca.source 0.15 0.35 0 sigma sigma sigma
+Ca.source 0.25 0.05 0 sigma sigma sigma
+Ca.source 0.25 0.15 0 sigma sigma sigma
+Ca.source 0.25 0.25 0 sigma sigma sigma
+Ca.source 0.25 0.35 0 sigma sigma sigma
+Ca.source 0.35 0.05 0 sigma sigma sigma
+Ca.source 0.35 0.15 0 sigma sigma sigma
+Ca.source 0.35 0.25 0 sigma sigma sigma
+Ca.source 0.35 0.35 0 sigma sigma sigma
+
+Ca.bc Noflux Noflux Noflux Noflux Pump Pump
+
+bc.define Pump 1 -0.133 0  
+
+%==================================================================================
+%                   3.  BUFFER  PARAMETERS  DEFINITIONS
+%==================================================================================
+
+buffer Bf
+Bf.D =0.0
+Bf.kplus =0.5
+Bf.kminus =25.0
+Bf.total =2000
+
+%==================================================================================
+%                       5.  SIMULATION  RUN  PARAMETERS            
+%==================================================================================
+
+Run adaptive 1.0 ; current I1
+Run adaptive 0.4 ; current I2
+Run adaptive 3.6 ; current 0.0
+ 
+Run adaptive 1.0 ; current I1
+Run adaptive 0.4 ; current I2
+Run adaptive 3.6 ; current 0.0
+ 
+I1 = 1.35
+I2 = 4.6
+
+%==================================================================================
+%                            6.  DATA  OUTPUT           
+%==================================================================================
+
+dCX/dt   = 2 kx.off C2X + 4 kx.on C X   - (   kx.off + 3 kx.on C ) CX
+dC2X/dt  = 3 kx.off C3X + 3 kx.on C CX  - ( 2 kx.off + 2 kx.on C ) C2X
+dC3X/dt  = 4 kx.off C4X + 2 kx.on C C2X - ( 3 kx.off +   kx.on C ) C3X
+dC4X/dt  =                  kx.on C C3X -   4 kx.off C4X
+
+X  := 1 - CX - C2X - C3X - C4X         % Conservation constraint for the X-sensor
+CX(0) = 0  ; C2X(0) = 0 ; C3X(0) = 0 ; C4X(0) = 0  % Initial conditions
+ 
+C := Ca[0,0,0]
+ 
+% 2. Next, we define the equation for the facilitation Y-sensor:
+ 
+dCY/dt = ky.on C ( 1 - CY ) - ky.off CY
+CY(0) = 0
+ 
+% 3. Finally, the equation for the release rate:
+ 
+dRelease/dt = k2 C4X CY - k3 Release
+Release(0) = 0
+ 
+ 
+% 4. Now we define the rate constants in the above system of equations (Y.kon will be
+% redefined for the simulations with tortuosity, Figs. 2D and 3D; in that case the
+% Y-sensor affinity is changed to 9 uM)
+ 
+kx.off = 100  ;  kx.on = 0.5      % For the X-sensor affinity = koff / kon = 200 uM
+ky.off = 0.15 ;  ky.on = 0.01   % For the Y-sensor affinity = Y.koff / Y.kon = 3 uM
+k2 = 1        ;  k3 = 1          % These define kinetics of the release rate variable
+ 
+%==================================================================================
+
+plot.print "yamada.zucker."
+
+plot C
+plot Release
+
+% plot.method xmgr
+
+%==================================================================================
+%                                  T H E   E N D
+%==================================================================================

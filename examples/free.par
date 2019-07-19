@@ -1,0 +1,72 @@
+
+%*******************************************************************************
+%                Calcium Calculator (CalC), version 5.5.0
+%
+%			http://web.njit.edu/~matveev
+%
+%                   Victor Matveev,  matveev@njit.edu
+%                   New Jersey Institute of Technology
+%
+%                            October 8, 2005
+%
+%*******************************************************************************
+%
+%  This is an example script (parameter) file for the Calcium Calculator, checking the 
+%  program against the known exact solution for the steady state near a point source:
+%
+%                          C(r) = I_Ca / (4 pi D_Ca r)
+%
+%========================================================================
+
+geometry = spherical 		% Fully spherically symmetric problem
+
+R = 2				% Radius of our spherical simulation domain is 2 um
+
+volume 0 R			% The domain interval is r in [0, R]
+
+grid 200			% Number of sphericals shells (spatial grid nodes)
+
+bc.define Free 1 b 0 0 		% Define boundary condition "Free", as a generalized Neumann
+				% boundary condition. Since we know the solution to behave 
+				% as C = 1 / r, the derivative satisfies C' = -1 / r^2 = -C / r
+				% Therefore, at the boundary we have C' + C / R = 0, or
+				% C' + b C = 0, where b = 1/R (see manual for bc.define syntax)
+
+b = -1 / R			% Minus sign is from the CalC convention that the derivative in the 
+				% boundary condition definition is taken with respect to the normal 
+				% directed *inside* the domain.
+
+Ca.D = 0.25			% Ca2+ diffision coefficient, in um^2/ms
+Ca.bgr = 0			% Resting background Ca2+ concentration is zero
+Ca.bc Neumann Free		% Boundary condition is Neumann at zero (perhaps not obvious but correct),
+				% and "Free" at r=R (defined above)
+
+Ca.source 0			% One point channel source at the origin (r=0)
+
+run adaptive 50  		% Run the simulation for 100 ms, which is more than enough to reach
+				% the exact equilibrium solution 
+
+current = 1 pA			% Current strength is 1 pA. Note that pA is basically a unit conversion
+				% constant, which includes the Faraday factor 2 F in the denominator. 
+				% 1 pA = 5.1823e-21 mol/ms = 5.1823 [I], where [I] = uM * (um)^3 / ms
+
+% plot.method xmgr		% uncomment if you have xmgr or xmgrace (plots data in real time!)
+
+plot 1D Ca 			% Show Ca[r] vs r. If you plot it on a log-log scale, you get a perfectly
+				% straight line
+
+plot Ca[1]			% Plot [Ca2+] at r = 1 um
+
+Ca1exact = 1 pA / (4 pi Ca.D)	% Compare with exact value: Ca[r] = I.Ca /(4 pi Ca.D r)
+
+Error := Ca[1] - Ca1exact	% Define the error variable (use ":=" for time-dependent variables)	
+
+plot Error			% plot the "Error " variable
+
+plot.method mute		% Produce file output if xmgr / xmgrace not used
+
+plot.print free.		% Save all plots into data files with prefix "free."
+
+plot.1D.steps = 1		% Plot r-dependence of [Ca2+] at the end of run only
+
+

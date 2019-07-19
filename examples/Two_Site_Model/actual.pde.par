@@ -1,0 +1,164 @@
+%**********************************************************************************
+%
+%                 CalC version 5.4.0, script "actual.pde.par"
+%                     Victor Matveev, January 4, 2005
+%
+%      Supplemental material for the Letter to the Editor of the Biophys. J.
+%           "New and Corrected Simulations of Synaptic Facilitation"
+%                    by V. Matveev, A. Sherman and R. Zucker
+% 
+%  This script defines the "actual" parameter set used to generate Fig. 7 (B and C)
+%  of Tang et al., Biophys J (2000) 78:2735 (see Table 1 of the Letter). These 
+%  parameters were extracted from the original code ("20nmcont.cc") by T. Schlumpberger.
+%
+%  This script is used by the main parent scripts "STF.growth.par",
+% "STF.decay.stage1.par" and "STF.decay.stage2.par"
+%__________________________________________________________________________________
+%
+%  Units are: micrometers for space, ms for time, microM for concentration,
+%  and 1e-12 mole/ms for current (one can also use the conversion constant "pA" 
+%  which is predefined for convenience)
+%
+%  Definitions appearing in a CalC script may be included in arbitrary order.
+%==================================================================================
+%                1.  GEOMETRY  PARAMETERS  DEFINITIONS  (cf p. 2741)
+%==================================================================================
+ 
+% The original program by T. Schlumpberger used grid intervals of 20 nm, but Ca2+ 
+% channels were assigned to grid points (2,2), (2,5), (5,2) and (5,5), as in the 10 nm
+% resolution diagram of Figure 5:
+
+a = 0.03 ; b = 0.09 ; c = 0.01  % These are constant definitions 
+ 
+Ca.source a a c  
+Ca.source a b c  
+Ca.source b a c  
+Ca.source b b c  
+
+% - Note that channels are "suspended" at a distance of c = 10 nm from the membrane.
+% This is the consequence of the way no flux (reflective, zero-derivative) boundary 
+% conditions were implemented in the original code: the concentration values at two 
+% sucessive grid points near the boundary were constrained to be equal, therefore the 
+% boundary is located in the *middle* of the interval between these two grid points. 
+% Thus, the concentration values correspond to the *centers* of elementary compartments, 
+% exactly as shown in Fig. 5 of Tang et al.
+%
+% In the x- and y- directions, the model (quarter-)bouton size is 0.8 x 0.8 um. In the 
+% z-direction, the original program assumed a non-uniform grid, with elementary 
+% compartment size doubling at the 4th, 7th and 10th sheets (compare with description 
+% on p. 2736). Here is the resulting schematic showing the z coordinates (in units of
+% nm) of the centers of elementary compartments:
+%
+%    10  50   120   220  300  380    500      660      820      980   1060 nm
+%   |1|2|3|4 |5 |6 | 7  | 8  | 9  |   10   |   11   |   12   |   13   |
+%   0  30  80    160 nm
+%         ^        ^              ^    ( pointers mark compartment doublings )
+%
+% Therefore, the enclosure dimensions are:
+
+volume 0 0.8 0 0.8 0 1.06
+
+% Next line defines the grid (discretization of space) for the numerical solver. 
+% The number of points in the x- and y- directions is 34, and there are 40 points
+% in the z-direction (the channels lye in the x-y plane; cf. Fig. 5 of Tang et al.). 
+% These grid dimensions guarantee a numerical accuracy of about 5 % 
+
+grid 34 34 40       
+
+% To improve the spatial resolution, we use a non-uniform grid, with a higher
+% density of grid points close to the active zone (spatial gradients are the
+% largest in this region, so higher spatial resolution is required). The grid is
+% smoothly stretched in all directions away from the active zone; for a
+% given direction, each successive grid interval is given by a product of the 
+% previous grid interval, and a factor slightly greater than one, defined by the 
+% "stretch.factor" constant:
+
+stretch.factor = 1.07  
+
+% The following "stretch" commands describe the region of space where the grid
+% points are dense. The grid is stretched in all 3 directions away from this region.
+% In this case, the "dense" region is a 90 nm by 90 nm by 10 nm patch containing 
+% the 4 Ca2+ channels (see "Ca.source" definitions above)
+ 
+stretch x 0 b  % Stretch in the x-direction starts from x = b = 0.09 um = 90 nm
+stretch y 0 b  % Same for the grid stretch in the y-direction
+stretch z 0 c  % In the z-direction stretching starts from  z = c = 10 nm
+
+%==================================================================================
+%                 2.  CALCIUM  PARAMETERS  DEFINITIONS  (cf p. 2742)
+%==================================================================================
+ 
+Ca.D   = 0.2  % The Ca2+ difussion coefficient (in units of um^2/ms; cf p. 2742).
+Ca.bgr = 0.1  % Background Ca2+ concentration = 0.1 uM = 100 nM
+ 
+% Now we define the boundary conditions (b.c.) for Ca2+, for each of the six 
+% surfaces of the bouton volume: no flux boundaries in x- and y- directions, and 
+% pump b.c. on the z-plane containing the active zone (channel array):
+
+Ca.bc Noflux Noflux Noflux Noflux Pump Noflux
+
+% While the no flux b.c. is defined internally, the "Pump" b.c. we have to define 
+% ourselves. A b.c. is defined by 3 constants (a, b and c) in the boundary equation
+% "a dU/dn + b U = c", where U is the concentration field, and dU/dn is its
+% derivative in the direction normal to the boundary. For pump rate P, we have
+%
+%     D dCa/dn - P (Ca - Ca.bgr) = 0   or   dCa/dn - P/D Ca = - P/D Ca.bgr
+%
+% where D=0.2 um^2/ms is the diffusion coefficient and Ca.bgr=0.1 uM is the 
+% steady-state Ca2+ concentration. Pump rate is P = 0.05 um/ms, so we define
+
+bc.define Pump 1 -0.25  0  % defines the pump b.c. d[Ca]/dn - 0.25 ([Ca] - Ca.bgr) = 0
+ 
+%==================================================================================
+%                 3.  BUFFER  PARAMETERS  DEFINITIONS  (cf p. 2742)
+%==================================================================================
+ 
+buffer Bf           % This introduces the fixed buffer, and gives it a name "Bf"
+Bf.D = 0.0          % Diffusion coefficient is zero, since it is fixed
+Bf.total = 8000     % Total concentration is 8 mM ( cf quoted value of 5.76 nM )
+Bf.kplus = 0.5      % Binding rate 0.5 / (uM ms) ( cf quoted value of 0.1 )
+Bf.KD = 16          % Affinity is 16 uM
+Bf.bc all Noflux    % Reflective boundary conditions on all surfaces (default; may
+                    % be omitted). 
+
+buffer Bm           % Let's call the mobile buffer "Bm"
+Bm.D = 0.01         % Diffusion coefficient is 0.05 um^2/ms
+Bm.total = 560      % Total concentration is 280 uM ( cf quoted value of 280 uM )
+Bm.kplus = 0.5      % Binding rate 0.1 / (uM ms) ( cf quoted value of 0.1 )
+Bm.KD = 4           % Affinity is 2 uM
+ 
+% Fura-2 indicator dye properties:
+
+% buffer F2         % Uncomment this line to include Fura-2
+F2.D = 0.118        % Diffusion coefficient is 0.118 um^2/ms
+F2.total = 400      % Total concentration is 400 uM
+F2.kplus = 0.27     % Binding rate 0.1 / (uM ms)
+F2.kminus = 0.0967  % Unbinding rate 0.0967 / ms
+ 
+%==================================================================================
+%             4.  AUXILIARY  VARIABLE  AND  CONSTANT  DEFINITIONS 
+%==================================================================================
+
+% Here we define variables tracking Ca2+ concentration at the secretory and STF
+% sites. In the original code, the secretory site was placed in the elementary cell
+% {5,5,2}, which translates into coordinate {x = y = 90 nm, z = 30 nm}: 
+ 
+CaX :=  Ca[b,b,0.03]  % [Ca2+] at secretory sensor, 20 nm below corner channel
+                      % (recall that the channels are located 10 nm above the
+                      % surface - see above)
+
+% The facilitation site was placed in the first z-layer after the "doubled" compartment layer (see above), 
+% at cell {3,3,4}, corresponding to coordinate {x = y = 100 nm, z = 80 nm}: 
+ 
+CaY :=  Ca[0.1,0.1,0.08]  % [Ca2+] at facilitation sensor, ca. 70 nm below channel
+ 
+ 
+% In the original code, Ca2+ currents are multiplied by a factor of 0.8 (cf p. 2741):
+
+I.AP   = 0.8 * 1.35  % Ca2+ current during an AP = 1.35e-21 mol/ms = 1.35e-9 fmol/us
+I.tail = 0.8 * 4.60  % Ca2+ tail current = 4.6e-21 mol/ms = 4.6e-9 fmol/us
+ 
+
+%==================================================================================
+%                                  T H E   E N D  
+%==================================================================================

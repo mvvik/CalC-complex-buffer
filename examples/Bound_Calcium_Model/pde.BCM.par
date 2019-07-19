@@ -1,0 +1,65 @@
+%**********************************************************************************
+%
+%                   CalC version 5.5.9, script "pde.BCM.par"
+%                       Victor Matveev, October 9, 2006
+%
+%                    "Residual Bound Calcium Can Account for the 
+%                 Effects of Calcium Buffers on Synaptic Facilitation"
+%                      V. Matveev, R. Bertram and A. Sherman
+%               J. Neurophysiol. (2006) 96: doi:10.1152/jn.00101.2006
+% 
+%             This script implements the PDE part of the model, Eqs. 2-5
+%__________________________________________________________________________________
+%
+
+grid 34 34 40    % Grid size (sufficient for an accuracy of a few percent)
+
+%==================================================================================
+
+a = 0.03 ; b = 0.09   % These are constant definitions 
+ 
+Ca.source a a 0       % Locations of four calcium channels (see Fig. 1)
+Ca.source a b 0 
+Ca.source b a 0 
+Ca.source b b 0 
+
+volume 0 0.8 0 0.8 0 1.0  % Enclosure dimensions
+
+stretch.factor = 1.06     % Non-uniform grid, with higher density near channel array
+
+stretch x 0 b  % Stretch in the x-direction starts from x = b = 0.09 um = 90 nm
+stretch y 0 b  % Same for the grid stretch in the y-direction
+stretch z 0 0  % In the z-direction stretching starts from z = c = 0 plane (membrane)
+ 
+%==================================================================================
+
+Bf.kappa = 600 - Bs.kappa
+
+buffer Bf                    % This introduces the fast buffer, and gives it a name "Bf"
+Bf.total = Bf.kappa * Bf.KD  % Total concentration is the product of binding ratio and affinity
+
+buffer Bs                    % This introduces the slow buffer, and gives it a name "Bs"
+Bs.total = Bs.kappa * Bs.KD  % Total concentration is the product of binding ratio and affinity
+
+buffer F2           	% Indicator dye Fura-2
+F2.D = 0.118        	% Diffusion coefficient is 0.118 um^2/ms
+F2.kplus = 0.27     	% Binding rate 0.1 / (uM ms)
+F2.kminus = 0.0967  	% Unbinding rate 0.0967 / ms
+
+%==================================================================================
+
+Ca.bgr = 0.05     	% Background Ca2+ concentration
+Ca.D   = 0.22    	% this defines the Ca diffusion coefficient (0.22 um^2/ms)
+
+M      = 0.04           % Pump rate, in um / ms 
+K_PUMP = 0.4            % Pump affinity, uM 
+
+A = - M / Ca.D / K_PUMP % Constant that appears in the pump boundary condition 
+
+Ca.bc Noflux Noflux Noflux Noflux Pump Pump  % Only the z-surfaces have the pump
+bc.define Pump 1 A 0 K_INV                   % See CalC manual for b.c. definition syntax
+K_INV = 1 / K_PUMP                  
+
+%================================================================================== 
+
+

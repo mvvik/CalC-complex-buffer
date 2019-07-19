@@ -1,0 +1,55 @@
+%**********************************************************************************
+%
+%                   CalC version 5.5.9, script "ode.BCM.par"
+%                       Victor Matveev, October 9, 2006
+%
+%                    "Residual Bound Calcium Can Account for the 
+%                 Effects of Calcium Buffers on Synaptic Facilitation"
+%                      V. Matveev, R. Bertram and A. Sherman
+%               J. Neurophysiol. (2006) 96: doi:10.1152/jn.00101.2006
+% 
+%             This script implements the ODE part of the model, Eqs. 6-9
+%__________________________________________________________________________________
+%
+
+X.KD  = 20                    % Ca-affinity of the X-site is 20 uM (see Table 1)
+Y1.KD = 20                    % Ca-affinity of the F1 Y-site is 20 uM 
+Y2.KD = 20                    % Ca-affinity of the F2 Y-site is 20 uM 
+
+Y1.tau = 30                   % F1 Y-site unbinding rate = 30 ms (see Eq. 7)
+Y1.koff = 1.0 / Y1.tau
+Y1.kon = Y1.koff / Y1.KD
+
+Y2.tau = 300                  % F2 Y-site unbinding rate = 300 ms (Eq. 7)
+Y2.koff = 1.0 / Y2.tau
+Y2.kon = Y2.koff / Y2.KD
+
+koff = 50;  kon = koff / X.KD  % X-site kinetics
+
+%==================================================================================
+%
+%  Implementation of Eqs. 6-9:
+%
+%==================================================================================
+
+dCX/dt   = - koff CX + 2 kon X CaX - kon CX CaX + 2 koff CCX
+dCCX/dt  = kon CX CaX - 2 koff CCX 
+ 
+X  := 1 - CX - CCX                 % Conservation constraint for the Y-sensor
+ 
+dCY1/dt   = - Y1.koff CY1 + Y1.kon Y1 CaX
+dCY2/dt   = - Y2.koff CY2 + Y2.kon Y2 CaX
+
+CY1(0) = Ca.bgr / (Ca.bgr + Y1.KD)
+CY2(0) = Ca.bgr / (Ca.bgr + Y2.KD)
+
+Y1  := 1 - CY1                 % Conservation constraint for the Y-sensor
+Y2  := 1 - CY2                 % Conservation constraint for the Y-sensor
+ 
+dR/dt = kR CCX CY1 CY2 - kI R
+ 
+%==================================================================================
+
+kR = 1;    kI = 10  
+ 
+%==================================================================================

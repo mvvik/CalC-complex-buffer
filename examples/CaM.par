@@ -1,0 +1,66 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%   Ca2+ binding to calmodulin near a point source of constant current
+% Calmodulin parameters as in Faas et al. (2011) Nat Neurosci 14:301-304:
+%
+%                         Victor Matveev
+%         Calcium Calculator version 7.2, September 24, 2012
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Number_Of_Iterations_Per_PDE_Step = 5  % Numerical engine parameter. Default is 3, but in
+                                       % this case we need more due to fast Ca-binding by the
+                                       % N-lobe (monitor charge.loss to find appropriate value)
+ 
+geometry = spherical   % Angle-symmetric spherical coordinates (single spatial variable, "r")
+
+R = 1                  % Radius of diffusion volume is 1 um
+volume 0 R             % Define diffusion space sphere of radius R
+
+V = 4/3 pi R^3         % Total volume of diffusion enclosure
+
+grid 400               % Number of grid nodes
+stretch.factor = 1.02  % Non-uniform grid with each successive sub-interval stretched by 1.02
+stretch r 0 0         
+
+Ca.source 0 W          % Define the calcium channel, located at the origin (r = 0)
+W = 0.02               % Calcium influx is smoothed out over a sphere of about W = 20nm radius
+
+Ca.D = 0.2             % Ca diffusion coefficient is 0.2 um^2/ms
+Ca.bgr = 0.1           % Background [Ca] is 100 nM 
+
+Run adaptive 10        % Run simulation for 10 ms
+current = 1 pA         % With constant Ca2+ current of 1pA through the channel
+
+buffer cooperative N   % Define the CaM N-lobe with cooperative Ca2+ binding 
+N.total = 100          % Total concentrations is 100 uM
+
+N.D     = 0.05         % Mobility of all bound states of CaM is 0.05 um^2/ms
+Ca.N.D  = 0.05
+Ca2.N.D = 0.05
+
+TotalBufferCheck := N[]  + Ca.N[] + Ca2.N[]                    % These two auxiliary variables will help
+ExcessCaCheck    := V*(Ca[] + Ca.N[] + 2* Ca2.N[]) - _Charge   % to monitor accuracy of integration
+
+% Calmodulin N-lobe calcium-binding properties as quoted in Faas et al. (2011) Nat Neurosci 14:301-304:
+
+N.kplus = 2 * 0.77     % first reaction rate in uM-1ms-1
+N.KD    = 193 / 2      % affinity of first reaction in uM
+
+Ca.N.kplus = 32        % second reaction rate in uM-1ms-1
+Ca.N.KD    = 2 * 0.788 % affinity of second reaction in uM 
+
+plot.print CaM-example % To produce output data file for each plot defined below
+
+% Uncomment the next line when using xmgrace for real-time plots:
+ 
+% plot.method xmgr
+
+plot 1D Ca             % Plot of [Ca2+] vs distance from channel
+plot 1D N              % Plot of free [Calmodulin] vs distance from channel
+plot TotalBufferCheck
+
+plot 1D Ca.N           % Plot of single-bound calmodulin vs distance from channel
+plot 1D Ca2.N          % Plot of double-bound calmodulin vs distance from channel
+
+%plot ExcessCaCheck
