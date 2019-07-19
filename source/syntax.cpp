@@ -716,7 +716,7 @@ bool TokenString::isNumberParam(const char *s, long &pFirst, double *result)
 			else return false;
 
 			char  *sind;
-			if ( !( sind = strtok( '\0', "}") ) ) errorMessage( token_index(s), 0, "No closing curly bracket" );  
+			if ( !( sind = strtok( NULL, "}") ) ) errorMessage( token_index(s), 0, "No closing curly bracket" );  
 
 			double dind;
 			if ( !isConst(sind, &dind) )  errorMessage( token_index(s), 0, "Bad array index");  
