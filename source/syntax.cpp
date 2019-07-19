@@ -119,7 +119,7 @@ void TokenString::errorMessage(long p, char *message1, const char *message2) {
 
 	delete [] lineInfo;
 
-	fprintf(stderr, message);
+	fprintf(stderr, "%s", message);
 	throw 1;
 }
 

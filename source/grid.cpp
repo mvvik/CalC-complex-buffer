@@ -328,7 +328,7 @@ void GridObj::grid_stretch(const char *dir, double factor, double x1, double x2)
 
   if ( stretchOrder > 4.0 ) 
 	  if (VERBOSE)
-		  fprintf(stderr, makeMessage("*** Warning: largest to smallest interval ratio spans %.1g orders of magnitude", stretchOrder));
+		  fprintf(stderr, "%s", makeMessage("*** Warning: largest to smallest interval ratio spans %.1g orders of magnitude", stretchOrder));
 
   if (VERBOSE) {
     fprintf(stderr,"    Uniform %s-interval = [%.6g, %.6g] (%d..%d)\n", 
@@ -415,7 +415,7 @@ void GridObj::grid_stretch(double factor, int n1, int N, double cmin, double cma
   double stretchOrder = fabs( log(grid[N]/grid[0]) / log(10.0) );
   if ( stretchOrder > 4.0 ) 
 	  if (VERBOSE)
-		  fprintf(stderr, makeMessage("*** Warning: largest to smallest interval ratio spans %.1g orders of magnitude", stretchOrder));
+		  fprintf(stderr, "%s", makeMessage("*** Warning: largest to smallest interval ratio spans %.1g orders of magnitude", stretchOrder));
 }
 
 //*****************************************************************************
