@@ -95,5 +95,5 @@ simulation.o : simulation.cpp simulation.h box.h field.h vector.h syntax.h gate.
 loop.o  :  loop.cpp loop.h fplot.h box.h field.h vector.h syntax.h gate.h table.h peak.h interpol.h markov.h
 	   $(CXX) $D/loop.cpp  ${flags} -c
 
-
-
+clean :
+	rm -f calc source/*.o
