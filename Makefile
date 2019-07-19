@@ -35,8 +35,8 @@
 D = source
 VPATH = . : $D 
 
-flags = -O
-llibs = -lm
+flags = -O ${CXXFLAGS}
+llibs = -lm ${LDFLAGS}
 CXX = g++
 
 objects  = syntax.o vector.o table.o peak.o box.o grid.o field.o \
