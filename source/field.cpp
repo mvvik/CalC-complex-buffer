@@ -1,7 +1,7 @@
 /**************************************************************************
  *
  *                       Calcium Calculator (CalC)
- *                Copyright (C) 2001-2019 Victor Matveev
+ *                Copyright (C) 2001-2021 Victor Matveev
  *
  *                               field.cpp
  *
@@ -1940,21 +1940,42 @@ else
 
     if ( !pos && coopFlag < 2 ) throw makeMessage("Total concentration not defined for buffer \"%s\"", id);
 
-    if ( (D != 0.0 || pMembrane) && pos ) 
+    if ( (D != 0.0 || pMembrane) && pos ) {
 	   Total = ExpressionObj(params, pos + 1, makeMessage("Bad total concentration definition for buffer \"%s\"", id) ).Evaluate();
+	   if (VERBOSE) fprintf(stderr,"%g \n", Total);
+	}
 
-    if ( D != 0.0 && pos ) {
-      if (VERBOSE) fprintf(stderr,"%g uM", Total);
-      *total = Total;
-    }
+    if ( D != 0.0 && pos )  *total = Total;
 
-    if ( pMembrane ) {
+       if ( pMembrane ) {
+		*total = 0.0;
+	    int  bid, boxNum = Region->get_box_num();
+		int  C_not_N = params.token2_count("membrane.definition", "concentration");  // <<==== New definition here
+		if (VERBOSE) {
+			if (C_not_N) fprintf(stderr, "    Membrane-bound total buffer concentration is expressed in uM units \n");
+		    else         fprintf(stderr, "    Membrane-bound total buffer concentration is defined as molecules per um^2 \n"); 
+		}
+	
         if (D > 0.0) 
            params.errorMessage(params.token_index(ID, "D") + 1, 0, "Diffusion coefficient must be zero for membrane-bound buffer");
-        double  Depth = 0;
+
+		double  Depth = 0;
         params.trail_pars( pMembrane, 'd', &Depth);
-        if (Depth == 0.0)  setMembraneBound(Total);
-                    else   setMembraneLayer(Total, Depth);
+
+		int count = params.tokens_to_eol( pMembrane );
+
+		if (count <= 2) {
+			if (Depth == 0.0)  setMembraneBound(Total, C_not_N, boxNum);
+						else   setMembraneLayer(Total, Depth,   boxNum);
+		} 
+		else 
+			for(int kk = 2; kk <= count - 1; kk++) {
+				bid = params.get_int( pMembrane + kk ) - 1;
+				if (bid >= boxNum || bid < 0) 
+					params.errorMessage( pMembrane + kk,  makeMessage("Box ID = %d exceeds the number of available boxes = %d", bid+1, boxNum) );
+				if (Depth <= 0.0)  setMembraneBound(Total, C_not_N, bid);
+				         	else   setMembraneLayer(Total, Depth,   bid);
+			}
       }
     else if (D == 0.0 && pos ) 
             setFieldByFunction(params, pos + 1, total->elem, makeMessage("Bad expression for total concentration of %s",ID) );
@@ -1979,31 +2000,37 @@ else
 
 //****************************************************************************
 
-  void  BufferObj :: setMembraneLayer(double Total, double depth) 
+  void  BufferObj :: setMembraneLayer(double Total, double depth, int boxid) 
     {
     long    ii, jj, Incr = 1;
-    int     ix, iy, iz, j = 0, incr = 1;
-    double  *coord = 0; // dx;
+    int     ix, iy, iz, j = 0, incr = 1, bid, point;  // j was uninitialized in previous version!!
+    double  *coord = 0;
+	int     boxNum = Region->get_box_num();
 
-    *total = 0.0;
-
-    if (VERBOSE) fprintf(stderr,"%g uM\n    Buffer %s is membrane-localized with depth %g um", Total, ID, depth); 
-    
+	if (VERBOSE) {
+		if (boxid < boxNum) fprintf(stderr,"    Buffer %s is membrane-localized with depth %g um to box %d    \n", ID, depth, boxid+1); 
+		               else fprintf(stderr,"    Buffer %s is membrane-localized with depth %g um to all boxes \n", ID, depth); 
+	}
+	
     for (ii=0 ; ii < Size; ii++) 
      if ( ptype[ii] & SURF_MASK ) { 
 
-		   Grid->split(ii, ix, iy, iz);
-		   unsigned long point = ptype[ii];
+       Grid->split(ii, ix, iy, iz);
+       point = point_type(ix, iy, iz);
+	   bid = point >> 7;
+
+	   if (boxid == bid || boxid >= boxNum) {
 
 		   if ( point & (SURF_XMAX | SURF_XMIN) ) 
-			  { Incr = 1;      j = ix;  coord = xcoord; incr = (point & SURF_XMIN) ? 1 : -1; }  //dx = xgrid[j = ix]; 
+			  { Incr = 1;      coord = xcoord; j = ix; incr = (point & SURF_XMIN) ? 1 : -1; }  // dx = xgrid[j = ix]; 
 		   if ( point & (SURF_YMAX | SURF_YMIN) ) 
-			  { Incr = xsize;  j = iy;  coord = ycoord; incr = (point & SURF_YMIN) ? 1 : -1; }  //dx = ygrid[j = iy]; 
+			  { Incr = xsize;  coord = ycoord; j = iy; incr = (point & SURF_YMIN) ? 1 : -1; }  // dx = ygrid[j = iy]; 
 		   if ( point & (SURF_ZMAX | SURF_ZMIN) ) 
-			  { Incr = xysize; j = iz;  coord = zcoord; incr = (point & SURF_ZMIN) ? 1 : -1; }  //dx = zgrid[j = iz]; 
+			  { Incr = xysize; coord = zcoord; j = iz; incr = (point & SURF_ZMIN) ? 1 : -1; }  // dx = zgrid[j = iz]; 
 
 		   Incr *= incr;
 		   jj    = ii;
+
 		   //fprintf(stderr,"ii=%ld (%d,%d,%d) point=%ld Incr=%ld incr=%d dx=%g\n",ii,ix,iy,iz,point,Incr,incr,dx); 
 
 		   double coordinate = coord[j];
@@ -2012,34 +2039,45 @@ else
 			 total->elem[jj] = Total; 
 			 jj += Incr; j += incr; 
 		   } while ( fabs(coord[j] - coordinate) <= depth && jj < Size );
+	   }
    }    
  }
 
 //****************************************************************************
 
-  void  BufferObj :: setMembraneBound(double Total) 
+  void  BufferObj :: setMembraneBound(double Total, int C_not_N, int boxid) 
     {
     long    ii;
-    int     ix, iy, iz;
-    double  Avogadro = 602.2;  // Units of concentration per area are:
-                               // uM * um = 10^(-13) mol /cm^2 = 10^(-21) mol / um^2 = 602.2 1 / um^2
-    *total = 0.0;
+    int     ix, iy, iz, point, bid;
 
-    if (VERBOSE) fprintf(stderr,"%g / um^2\n    Buffer %s is membrane-bound", Total, ID);
-    Total /= Avogadro; 
+    double  Avogadro    = 602.2;  // Units of concentration per area are:
+                               // uM * um = 10^(-13) mol /cm^2 = 10^(-21) mol / um^2 = 602.2 1 / um^2
+	double  AreaDensity = Total / Avogadro;
+    int     boxNum      = Region->get_box_num();
+
+	if (VERBOSE) {
+		if (boxid < boxNum) fprintf(stderr,"    Buffer %s is membrane-bound to box %d    \n", ID, boxid+1);
+		               else fprintf(stderr,"    Buffer %s is membrane-bound to all boxes \n", ID);
+	}
 
     for (ii=0 ; ii < Size; ii++) 
      if ( ptype[ii] & SURF_MASK ) { 
 
        Grid->split(ii, ix, iy, iz);
-       unsigned long point = ptype[ii];
+       point = point_type(ix, iy, iz);
+	   bid   = point >> 7;
 
-       if ( point & (SURF_XMAX | SURF_XMIN) ) total->elem[ii] += Total / xgrid[ix];
-       if ( point & (SURF_YMAX | SURF_YMIN) ) total->elem[ii] += Total / ygrid[iy];
-       if ( point & (SURF_ZMAX | SURF_ZMIN) ) total->elem[ii] += Total / zgrid[iz];
-   }    
- }
-
+	   if (boxid == bid || boxid >= boxNum) {
+		   if ( C_not_N )
+			   total->elem[ii] = Total;
+		   else  {
+					 if ( point & (SURF_XMAX | SURF_XMIN) ) total->elem[ii] += AreaDensity / xgrid[ix];
+				else if ( point & (SURF_YMAX | SURF_YMIN) ) total->elem[ii] += AreaDensity / ygrid[iy];
+				else if ( point & (SURF_ZMAX | SURF_ZMIN) ) total->elem[ii] += AreaDensity / zgrid[iz];
+		   }
+	   }
+	 }
+  }    
 //**************************************************************************
 
 BufferArray::BufferArray(TokenString &params) {

@@ -1,7 +1,7 @@
 /*****************************************************************************
  *
  *                      Calcium Calculator (CalC)
- *                Copyright (C) 2001-2019 Victor Matveev
+ *                Copyright (C) 2001-2021 Victor Matveev
  *
  *                                field.h
  *
@@ -267,8 +267,8 @@ class BufferObj : public FieldObj
   BufferObj& operator=(const double val)
     { *(VectorObj *)this = val; return *this; }
 
-  void setMembraneBound(double Total);
-  void setMembraneLayer(double Total, double depth);
+  void setMembraneBound(double Total, int C_not_N,  int boxid);
+  void setMembraneLayer(double Total, double depth, int boxid);
 
 };
 

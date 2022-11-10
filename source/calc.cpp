@@ -2,7 +2,7 @@
 /************************************************************************
  *
  *                   Calcium Calculator (CalC)
- *            Copyright (C) 2001-2019 Victor Matveev
+ *            Copyright (C) 2001-2021 Victor Matveev
  *                    LBM/NIDDK/NIH and DMS/NJIT
  *
  *              Calcium Calculator.cpp / calc.cpp
@@ -102,9 +102,9 @@ void Ca3DstepCoop(FieldObj &Ca, VectorObj &CaNew, BufferArray &Buf, BufferArray 
 void header() {
      fprintf(stderr,"\n******************************************************************");
      fprintf(stderr,"\n*                                                                *");
-     fprintf(stderr,"\n*  Calcium Calculator (CalC)  *  version 7.9.6  *  Aug 22, 2019  *");
+     fprintf(stderr,"\n*  Calcium Calculator (CalC)  *  version 7.9.7  *  Jan 15, 2021  *");
      fprintf(stderr,"\n*                                                                *");
-     fprintf(stderr,"\n*                Victor Matveev (C) 2001-2019                    *");
+     fprintf(stderr,"\n*                Victor Matveev (C) 2001-2021                    *");
 	 fprintf(stderr,"\n*   CalC is distributed under GPLv3: see attached license file   *");
      fprintf(stderr,"\n*                                                                *");
 	 fprintf(stderr,"\n*  Dept of Math Sciences, New Jersey Institute of Technology     *");
