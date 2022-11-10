@@ -7,7 +7,7 @@
                              matveev@njit.edu
                        http://web.njit.edu/~matveev
 
-                             October 10, 2022
+                             November 10, 2022
 
  ************************************************************************
  
@@ -25,8 +25,6 @@
 
     You should have received a copy of the GNU General Public License
     along with CalC.  If not, see <https://www.gnu.org/licenses/>
-
- ************************************************************************
 
 ==============================================================================
                              1.  COMPILATION
@@ -134,7 +132,7 @@ by reading the "mute plot" files. See CalC demo script web page for further deta
 ==============================================================================
 
 o  A hyper-text CalC script syntax manual can be found at URL
-   http://www.calciumcalculator.org
+   https://web.njit.edu/~matveev/calc/manual.html
 
 o  Also, examine the included commented example script files (file extension 
    ".par"): they reside in the "examples" directory.
@@ -142,5 +140,4 @@ o  Also, examine the included commented example script files (file extension
 o  Example script files are also available at
    http://web.njit.edu/~matveev/calc/scripts.html
 
-******************************************************************************
 ==============================================================================
