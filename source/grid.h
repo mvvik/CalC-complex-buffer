@@ -31,7 +31,6 @@
 
 #ifndef CALC_GRID_H_included
 #define CALC_GRID_H_included
-#define _CRT_SECURE_NO_DEPRECATE
 
 //*****************************************************************************
 //                    G R I D   O P E R A T I O N S

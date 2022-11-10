@@ -1,32 +1,33 @@
 /*****************************************************************************
  *
- *                       Calcium Calculator (CalC)
- *              Copyright (C) 2001-2019 Victor Matveev
- *   
- *                               fplot.h
+ *                        CalC (Calcium Calculator)
+ *                             Victor Matveev
  *
- *  Defines all plot objects, including mute (file dump) plots and xmgr/xmgrace pipes
+ *                               fplot.h
+ *                            GPL 1996-2022
+ *
+ *  Defines all plot objects, including mute (file dump) plots, xmgr/xmgrace
+ *  command pipes and gl/Ygl X-windows graphs
  *
  *                           Class Hierarchy
  *                           ^^^^^^^^^^^^^^^
- *            /- StateDump                            
- *           |                                      
- *           |-- MutePointPlot     /-- FieldPlot2D ------ MutePlot2D 
- *           |                    |                 
- *  PlotObj -|-- FieldPlotObj ----|--- FieldDump 
- *           |                    |
- *           |                    |--- FieldDumpT ("binary", or "4D" plot)
- *           |                    |                    
- *           |                     \-- FieldPlot1D \----- MutePlot1D 
- *            \                                    |   
- *             \_____ XmgrPointPlot                |    
- *             /                                   | 
- *            /                                     \_____ 
- *  XmgrPlot --------------------------------------------- Xmgr1Dplot
+ *  GlPlotObj ------------------------------------\-------------------\
+ *           \__                                   \____               \
+ *           /   GlPointPlot                       /     GlFieldPlot2D  \
+ *           |                    __               |                     __ GlFieldPlot1D
+ *           |-- MutePointPlot   /   FieldPlot2D --|---  MutePlot2D     /  
+ *           |                   |                                     /    
+ *  PlotObj -|-- FieldPlotObj ---|-- FieldDump        /---------------/   
+ *           |                   |                    |
+ *           |-- StateDump       \-- FieldPlot1D \----|---  RasterPlot (Obsolete/defunct)
+ *            \                                       |
+ *             \_____ XmgrPointPlot                   |---  MutePlot1D
+ *             /                                      |
+ *            /                                       \
+ *  XmgrPlot ---------------------------------------------- Xmgr1Dplot
  *
  *
- *
- ****************************************************************************
+ **************************************************************************
  
     This file is part of Calcium Calculator (CalC).
 
@@ -47,8 +48,8 @@
 
 #ifndef CALC_FPLOT_H_included
 #define CALC_FPLOT_H_included
-#define _CRT_SECURE_NO_DEPRECATE
 
+#define METHOD_GL   0
 #define METHOD_XMGR 1
 #define METHOD_MUTE 2
 
@@ -57,20 +58,55 @@
 #define xmgr_dxmargin 0.12
 #define xmgr_dymargin 0.12
 
-#define xmgr_tmargin 0.1
-#define xmgr_bmargin 0.1
+#define xmgr_tmargin  0.1
+#define xmgr_bmargin  0.1
 
-#define xmgr_lmargin 0.1
-#define xmgr_rmargin 0.06
+#define xmgr_lmargin  0.1
+#define xmgr_rmargin  0.06
 
-#define dx_legend 0.2
-#define dy_legend 0.1
+#define dx_legend     0.2
+#define dy_legend     0.1
 
-#define title_color 4 
+#define xmarg_color_panel 50
+#define ymarg_color_panel 15
 
+#define title_color 4
+
+#define gl_lmargin  30
+#define gl_rmargin  60
+
+#define gl_tmargin  25
+#define gl_bmargin  45
+
+#define gl_width_per_plot  500
+#define gl_height_per_plot 300
+
+#define GL_PIXELS_PER_X_GRID_LINE 150
+#define GL_PIXELS_PER_Y_GRID_LINE 90
+
+#define BGR_COLOR       256
+#define TEXT_COLOR      257
+#define GRID_LINE_COLOR 258
+#define PLOT_BGR_COLOR  259
+#define LABEL_COLOR     260
+#define TITLE_COLOR     261
+#define LINE1_COLOR     262
+#define LINE2_COLOR     263
+#define LINE3_COLOR     264
+#define LINE4_COLOR     265
+#define color_num       266
 
 double format_double(double number0, double number1, int divisions, int sigdigits, char *fstr);
 double format_digits(double number, int &digits);
+
+#ifndef _NO_GLUT_
+
+void   plotString(GLint x, GLint y, int clr, void *font, char* txt);
+void   drawSquare(GLint x0, GLint y0, GLint dx, GLint dy, int clr);
+void   setGluColor(int clr);
+void   initializeWindow(int = 0, int = 0);
+
+#endif
 
 class SimulationObj; // forward class declaration 
 
@@ -87,39 +123,33 @@ public:
   static int    UPDATE_STEPS_1D;
   static int    UPDATE_STEPS_BINARY;
   static double UPDATE_ACCURACY;
+  
+  char    win_title[512];
+  char    log_plot;
 
-  int   plot_height, win_height, plot_width,  win_width;
-  char  win_title[512];
-  long  winid;
-
-  char     x_label[80];
-  double   x_value;
-
-  char  log_plot, mute;
-
-  double   fmin, fmax;
-  double   *fptr;
-
-  PlotObj(double *ptr, char islog, const char *txt = "", const char *label = "")
+  double  x_value;
+  double  fmin, fmax;
+  double* fptr;
+  
+  PlotObj(double *ptr, char islog, const char *WinTitle = "")
     {
     fptr = ptr; log_plot = islog;
-    if (txt) strcpy(win_title,txt); else win_title[0] = 0;
-    if (label) strcpy(x_label,label); else x_label[0] = 0;
-    x_value = fmax = fmin = 0.0;
-    };
+    if (WinTitle) strcpy(win_title, WinTitle); else win_title[0] = 0;
+    x_value  = fmax = fmin = 0.0;
+	log_plot = 0;
+    }
 
   virtual ~PlotObj() { };
 
   virtual void draw() = 0;
   virtual void redraw() = 0;
-  void    draw_grid(double, double, double, double, char);
 
   virtual double get_value(long ind = 0)
    {
    double v = fptr[ind];
    if (!log_plot) return v;
       else return ( (v <= 0.0) ? 0.0 : log(v)/log(10.0) );
-   };
+   }
 
 };
 
@@ -141,7 +171,7 @@ public:
  FILE   *file;
 
  StateDump( SimulationObj *sim, double t,
-            const char *fname = 0, const char *txt = 0) : PlotObj(0, 0, txt) {
+            const char *fname = 0, const char *winTitle = 0) : PlotObj(0, 0, winTitle) {
     strcpy(fileName, fname); 
     Sim = sim;
     exportTime = t;
@@ -155,6 +185,102 @@ public:
 };
 
 //*******************************************************************************
+//           B A S E   C L A S S   G L   P L O T
+//*******************************************************************************
+// xmgr colors: 0-white 1-black 2-red 3-green 4-blue 5-yellow 6-brown 7-gray 
+// 8-violet 9-cyan 10-magenta 11-orange 12-indigo 13-maroon 14-turquise 15 -green4
+
+#ifndef _NO_GLUT_
+
+class GlPlotObj
+{
+protected:
+
+	static int graph_num;
+	static int graph_count;
+
+	static int    rows,       cols;
+	static double xscale,     yscale;
+
+	static GLint* GlPlotXmin,     * GlPlotDX,     * GlPlotYmin,     * GlPlotDY;
+	static GLint* GlPlotXmin_win, * GlPlotDX_win, * GlPlotYmin_win, * GlPlotDY_win;
+
+	static double xScaleFactor, yScaleFactor;
+
+	int    set_num;
+	int    set_count;
+	int    graph_id;
+	int    nRow, nCol;
+	
+public:
+
+	static GLubyte* ColorRed;
+	static GLubyte* ColorGreen;
+	static GLubyte* ColorBlue;
+	static  void    defineAllColors();
+	static  void    defineSpecialColors();
+
+	static int    GlWinWidth, GlWinHeight;
+	static double pixelsToX,  pixelsToY;
+
+	static  void init(TokenString&, int gnum, int = 0, int = 0);
+	static  void setViewport();
+	static  void defineColor(int clr, int red, int green, int blue);
+
+	void   draw_grid(double, double, double, double, char);
+	void   makeTitle(char* winTitle, double t0, double t1, double f0, double f1);
+	void   makeTitle(char* winTitle, double t0, double t1);
+	void   makeSubTitle(double fmin, double fmax);
+	void   makeAxisLabelX(char* txt);
+	void   makeAxisLabelY(char* txt);
+
+	 GlPlotObj(int sets, char is_log);
+
+	 ~GlPlotObj() { 
+		 static bool destroyedFlag = false;
+		 if (!destroyedFlag) {
+			 destroyedFlag = true;
+			 delete[] GlPlotXmin;     delete[] GlPlotDX;     delete[] GlPlotYmin;     delete[] GlPlotDY;
+			 delete[] GlPlotXmin_win; delete[] GlPlotDX_win; delete[] GlPlotYmin_win; delete[] GlPlotDY_win;
+		 }
+	 };
+
+	//	int setColor(int);
+};
+
+
+//*******************************************************************************
+//                  C L A S S   P O I N T   P L O T
+//*******************************************************************************
+
+class GlPointPlot : public PlotObj, public GlPlotObj
+{
+protected:
+
+	long    bufferSteps;
+	double* buffer;
+	double* times;
+	double* timeptr;
+	int     count;
+
+	bool    tempFlag;
+	double  x_old, f_old;
+    double  x_temp, f_temp;
+	double  lastTime;
+
+public:
+
+	GlPointPlot(double* ptr, double* tptr, char islog, double t, const char* WinTitle = 0);
+
+	~GlPointPlot() { delete[] buffer; delete[] times; }
+
+	void    draw();
+	void    redraw() { if (count) count--; draw(); }  // Count trick forcing redraw
+};
+
+#endif
+
+//*******************************************************************************
 //               C L A S S   M U T E   P O I N T   P L O T
 //*******************************************************************************
 
@@ -163,7 +289,7 @@ class MutePointPlot : public PlotObj
 protected:
 
   double *Time;
-  double fold;
+  double f_value;   // old function value (mirror var name "x_value") 
   double tscale;
   char   fileName[512];
   double x_temp, f_temp;
@@ -175,12 +301,12 @@ public:
  FILE   *file;
 
  MutePointPlot(double *ptr, double *tptr, char islog,  double t, 
-               const char *fname = "", const char *txt = "");
+               const char *fname = "", const char *WinTitle = "");
 
  ~MutePointPlot() { fclose(file); delete [] Tbuffer; delete [] Ybuffer; };
 
  void    draw();
- void    redraw()  { x_value = 0; draw(); }
+ void    redraw() { draw(); }  // removed x_value = 0 (don't redo the file writes!)
  void    pushValue(double t, double y);
 };
 
@@ -197,8 +323,8 @@ public:
  FieldObj *field; 
  long     field_index;
 
- FieldPlotObj(FieldObj *f, char islog, const char *txt = 0, const char *label = 0):
-   PlotObj((*f)(), islog, txt, label)  { field = f; field_index = 0; };
+ FieldPlotObj(FieldObj *f, char islog, const char *WinTitle = 0):
+   PlotObj((*f)(), islog, WinTitle)  { field = f; field_index = 0; };
 
  double get_value(long ind = 0);
 
@@ -217,7 +343,7 @@ public:
 
  FILE   *file;
 
- FieldDump(FieldObj *f, double t, const char *fname = 0, const char *txt = 0) : FieldPlotObj(f, 0, txt)
+ FieldDump(FieldObj *f, double t, const char *fname = "", const char *WinTitle = "") : FieldPlotObj(f, 0, WinTitle)
     {
     strcpy(fileName, fname);
 	sprintf(win_title, "%s (dump into %s at time %g)", f->ID, fileName, t);
@@ -250,7 +376,7 @@ public:
 
  FILE   *file;
 
- FieldDumpT(FieldObj *f, double total, const char *fname = 0, const char *txt = 0) : FieldPlotObj(f, 0, txt)
+ FieldDumpT(FieldObj *f, double total, const char *fname = 0, const char *WinTitle = 0) : FieldPlotObj(f, 0, WinTitle)
     {
 		strcpy(fileName, fname);
 		sprintf(win_title, "%s (binary plot into file %s)", field->ID, fileName);
@@ -317,11 +443,11 @@ protected:
 
   long    incr, num;
   double  *grid, *coord;
+  char    *axisLabel;
 
 public:
 
- FieldPlot1D(FieldObj *f, char islog, const char *dir, double coord1, double coord2, 
-             const char *label = "time=");
+ FieldPlot1D(FieldObj *f, char islog, const char *dir, double coord1, double coord2);
 
  virtual void    get_range();
 };
@@ -343,7 +469,7 @@ public:
  double *Tbuffer,  *Ybuffer;
 
  MutePlot1D(FieldObj *f, char islog, const char *dir, double coord1, double coord2, double T,
-            const char *fname = 0, const char *txt = 0) : FieldPlot1D(f, islog, dir, coord1, coord2)  
+            const char *fname = 0) : FieldPlot1D(f, islog, dir, coord1, coord2)  
  {
    exportTime = total = T;
    x_value = -1e-12;
@@ -368,6 +494,27 @@ public:
 
 
 //*******************************************************************************
+
+#ifndef _NO_GLUT_
+
+class GlFieldPlot1D : public FieldPlot1D, GlPlotObj
+{
+protected:
+
+	double tscale;
+
+public:
+
+	GlFieldPlot1D(FieldObj* f, char islog, const char* dir, double coord1, double coord2, double T);
+
+	void    draw();
+	void    redraw() { x_value = field->Time * (1 - 2 / tscale); draw(); };
+
+};
+
+#endif
+
+//*******************************************************************************
 //                C L A S S   2 D   F I E L D   P L O T
 //*******************************************************************************
 
@@ -378,10 +525,11 @@ protected:
   long    incr1, incr2, num1, num2;
   double  *grid1, *grid2;
   double  *coord1, *coord2;
+  char    *axisLabelX, *axisLabelY;
 
 public:
 
- FieldPlot2D(FieldObj *f, char islog, const char *dir, double coord, const char *label = "time=");
+ FieldPlot2D(FieldObj *f, char islog, const char *dir, double coord);
 
  virtual void  get_range();
 };
@@ -396,12 +544,12 @@ public:
 	double exportTime;
 	char   fileName[512];
 
-	MutePlot2D(FieldObj *f, char islog, const char *dir, double coord, double T,
-		const char *fname = 0, const char *txt = 0) :
+	MutePlot2D(FieldObj *f, char islog, const char *dir, double coord, double T, const char *fname = 0) :
 	FieldPlot2D(f, islog, dir, coord)
 	{
 		exportTime = T;
-		strcpy(fileName,fname);
+		complete = 0;
+		strcpy(fileName, fname);
 	};
 
 	~MutePlot2D() {  };
@@ -425,6 +573,33 @@ public:
 
 	void    redraw() { draw(); }; 
 };
+
+//*******************************************************************************
+
+#ifndef _NO_GLUT_
+
+class GlFieldPlot2D : public FieldPlot2D, public GlPlotObj
+{
+protected:
+
+	double  df_dcol;
+	double  tscale;
+
+public:
+
+	GlFieldPlot2D(FieldObj* f, char islog, const char* dir, double coord, double);
+
+	void    draw();
+	void    redraw();
+	GLubyte get_color(double);
+
+	void    get_range() {
+		FieldPlot2D::get_range();
+		df_dcol = (fmax - fmin) / 255.0;
+	}
+};
+
+#endif
 
 //*******************************************************************************
 //           B A S E   C L A S S   X M G R   P I P E   P L O T
@@ -462,10 +637,10 @@ protected:
 
 public:
 
- static void init(TokenString &, int gnum, FILE *f = stdout, int = 0, int = 0);
+  static void init(TokenString&, int gnum, FILE* f = stdout, int = 0, int = 0);
  static void processStrings(TokenString &);
 
- XmgrPlot(int sets, char is_log, const char *xlabel = "time");
+ XmgrPlot(int sets, char is_log);
  ~XmgrPlot() {};
 
  int setColor(int);
@@ -494,7 +669,7 @@ protected:
 
 public:
 
- XmgrPointPlot(int sets, char islog, double T = 0, const char *xlabel = "time");
+ XmgrPointPlot(int sets, char islog, double T = 0);
 
  void set_set(double *p, double *t, const char *txt = 0);
 
@@ -544,7 +719,7 @@ protected:
  double FscaleFactor;
 
  double cosine, sine;
- int  nBinsTotal, nBinsX, xBin;
+ int    nBinsTotal, nBinsX, xBin;
  double *Ybuffer;
  double Xmax, Ymax, Xscale, Yscale, binScale, binMult;
 
@@ -565,35 +740,43 @@ public:
 
 class PlotArray
 {
- protected:
+protected:
 
- public:
+public:
 
-  PlotObj **array;
-  int     plot_num;
-  int     count;
-  char    method;
+	PlotObj** array;
+	int     plot_num;
+	int     count;
+	char    gl_on, method;
 
-  PlotArray(class SimulationObj  &);
+	PlotArray(class SimulationObj&);
 
-  int get_plot_num(TokenString &);
+	int get_plot_num(TokenString&);
 
-  PlotArray(int n)   { count = 0;
-                       plot_num = n;
-                       if (n) array = new PlotObj *[n]; }
-  ~PlotArray();
+	PlotArray(int n) {
+		array = NULL;
+		count = 0; gl_on = 0;
+		plot_num = n;
+		if (n) array = new PlotObj * [n];
+	}
+	~PlotArray();
 
-  void set_plot(PlotObj *plot)  {
-     if (count >= plot_num) 
-        throw makeMessage("in PlotArray: cannot set plot #%d: total number = %d", count, plot_num); 
-     else array[count++] = plot;
-     }
+	void set_plot(PlotObj* plot) {
+		if (count >= plot_num)
+			throw makeMessage("in PlotArray: cannot set plot #%d: total number = %d", count, plot_num);
+		else array[count++] = plot;
+	}
 
-  void draw_plot(int n)   { if (n < count) array[n]->draw();   }
-  void redraw_plot(int n) { if (n < count) array[n]->redraw(); }
-  void draw_all()         { if (count) for (int i=0; i<count; i++) array[i]->draw();   }
-  void redraw_all()       { if (count) for (int i=0; i<count; i++) array[i]->redraw(); }
+	void draw_plot(int n)   { if (n < count) array[n]->draw(); }
+	void redraw_plot(int n) { if (n < count) array[n]->redraw(); }
 
+	void draw_all() {
+		if (count) for (int i = 0; i < count; i++) array[i]->draw();
+	}
+	
+	void redraw_all() {
+		if (count) for (int i = 0; i < count; i++) array[i]->redraw();
+	}
 };
 
 //*****************************************************************************

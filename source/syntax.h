@@ -32,7 +32,6 @@
 
 #ifndef CALC_SYNTAX_H_included
 #define CALC_SYNTAX_H_included
-#define _CRT_SECURE_NO_DEPRECATE
 
 extern int  VERBOSE;
 extern int  GEOMETRY;
@@ -338,9 +337,9 @@ public:
  char  *get_string(long p, char *s);
  char  *get_string(long p);
 
- // assert
+ // Assert
 
- bool assert(const char *var, const char *val);
+ bool Assert(const char *var, const char *val);
 
  // routines interpreting an assigned value; preserve value of the argument if no assignment is found
 

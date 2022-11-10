@@ -36,7 +36,6 @@
 
 #ifndef CALC_FIELD_H_included
 #define CALC_FIELD_H_included
-#define _CRT_SECURE_NO_DEPRECATE
 
 #define SOURCE_EPS  1.0e-4
 #define MIN_CURRENT 1.0e-12
@@ -287,7 +286,7 @@ public:
   int nonCoopNum;
   BufferObj **array;
 
-  BufferArray() { array = 0; ID = 0; buf_num = 0; }
+  BufferArray() { array = 0; ID = 0; buf_num = 0; nonCoopNum = 0; }
   BufferArray(TokenString &params);
   BufferArray(const BufferArray &bufs)  { allocateCopy(bufs); }
 

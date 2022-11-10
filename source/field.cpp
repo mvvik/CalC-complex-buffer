@@ -34,14 +34,15 @@
 
  ************************************************************************/
 
+#define _CRT_SECURE_NO_DEPRECATE
+#define _CRT_SECURE_NO_WARNINGS
 
-#include "stdafx.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
-#include "vector.h"
 #include <stdarg.h>
+#include "vector.h"
 #include "syntax.h"
 #include "box.h"
 #include "grid.h"
@@ -243,7 +244,7 @@ FieldObj::FieldObj(TokenString &params, const char *id) : VectorObj(Size)
 {
   int i;
 
-  integrate  = params.assert("current.shape","square") ? &square : &gaussian;
+  integrate  = params.Assert("current.shape","square") ? &square : &gaussian;
   fieldObstNum = params.token_count(id, "obstacle");
   source_num = params.token_count(id, "source");
 
@@ -1667,11 +1668,12 @@ do  {
   Laplace f[i]= dplus[i] f[i+1] + dminus[i] f[i-1] - (dplus[i] + dminus[i]) f[i] 
                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-   Boundary at i=0:  f[-1] = f[0] - dx (a - 0.5 b (f[0] + f[-1]) )   where a = bc_const = bc_coef + bgr b, b = bc_lin
-                     f[-1] = f[0] - dx a + 0.5 b dx (f[0] + f[-1])  
-                     f[-1](1 - b dx / 2) = f[0] (1 + b dx / 2) - a dx
+ Boundary at i=0:  f[-1] = f[0] - dx (a - 0.5 b (f[0] + f[-1]) )  where a = bc_const = bc_coef + bgr b, 
+                                                                        b = bc_lin + bc_pump * elem[i]^(bc_pow-1) / (bc_Kn + elem[i]^bc_pow)
+                   f[-1] = f[0] - dx a + 0.5 b dx (f[0] + f[-1])  
+                   f[-1](1 - b dx / 2) = f[0] (1 + b dx / 2) - a dx
 
-  dplus[0] f[1] + dminus[0] (f[0]*(1 + b dx / 2) - a dx) / (1 - b dx / 2)  - (dplus[0] + dminus[0]) f[0] 
+ dplus[0] f[1] + dminus[0] (f[0]*(1 + b dx / 2) - a dx) / (1 - b dx / 2)  - (dplus[0] + dminus[0]) f[0] 
   
  dplus[0] f[1] +  (dminus[0]*(1 + b dx / 2)/(1 - b dx / 2) - dplus[0] - dminus[0]) f[0] - a dx dminus[0] / (1 - b dx / 2)
  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
@@ -1685,42 +1687,13 @@ do  {
  dplus[0] f[1] - (2 dminus[0] + dplus[0]) f[0] + 2 dminus[0] (bc_coef + bgr)
  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
- Boundary at i=N:  f[N+1] = f[N] - dx (a - 0.5 b (f[N+1] + f[N]) )  where a = bc_coef + bgr b, b = bc_lin 
+ Boundary at i=N:  f[N+1] = f[N] - dx (a - 0.5 b (f[N+1] + f[N]) )  where a = bc_const = bc_coef + bgr b, 
+                                                                          b = bc_lin + bc_pump * elem[i]^(bc_pow-1) / (bc_Kn + elem[i]^bc_pow)
 
  dminus[N] f[N-1] +  (dplus[N]*b*dx / (1 - b dx / 2) - dminus[N]) f[N] - a dx dplus[N] / (1 - b dx / 2)
  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ****************************************************************************************************************************/
 
- /*
-signed int FieldObj::getGhost(long ind, double &factor, double &add)
-{
-    signed int bc = -1;
-    double bdx2;
-	int ix, iy, iz;
-	
-	factor = 1; add = 0;
-
-	long bcvar = ptype[ind];
-	if (bcvar && _INSIDE_) return 0;
-
-	Grid->split(ind, ix, iy, iz);
-
-	if (ix > 1)  {
-	   bcvar = ptype[ind - 1];
-	   if ( bcvar & SURF_XMAX ) {
-		 if ( bc_deriv[bc = (bcvar >> XSHIFT) & BC_ID_MASK ] == 0) {
-			 factor = -1.0;
-			 add = 2 * (bc_coef[bc] + bgr)
-			 return -1;
-		 }  else {
-			bdx2 = 0.5 * xgrid[ix] * (bc_lin[bc] + bc_pump[bc] * pow(elem[i], bc_pow[bc]-1) / (bc_Kn[bc] + pow(elem[i], bc_pow[bc]) ) );
-			return ( elem[i] * (1 + bdx2) - xgrid[ix] * bc_const[bc] ) / (1 - bdx2);
-		 }
-	   }
-	}
-
-}
-*/
 
 //**********************************************************************************************
 

@@ -27,8 +27,9 @@
     along with CalC.  If not, see <https://www.gnu.org/licenses/>
 
  ************************************************************************/
+#define _CRT_SECURE_NO_DEPRECATE
+#define _CRT_SECURE_NO_WARNINGS
 
-#include "stdafx.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -137,7 +138,7 @@ double TableObj::Evaluate(double x)
         catch (char *str) 
          { Param.errorMessage(p0, str, "Bad \"table\" definition"); }
         catch (int ERR) 
-         { Param.errorMessage(p0, 0, "Bad \"table\" definition"); }
+         { Param.errorMessage(p0, 0, makeMessage("ERROR=%d: Bad \"table\" definition", ERR)); }
     }
      
   }

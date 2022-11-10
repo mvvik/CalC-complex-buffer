@@ -28,7 +28,6 @@
 
 #ifndef CALC_VectorObj_H_included
 #define CALC_VectorObj_H_included
-#define _CRT_SECURE_NO_DEPRECATE
 
 extern int VERBOSE;
 

@@ -1,7 +1,7 @@
 /*****************************************************************************
  *
  *                      Calcium Calculator (CalC)
- *               Copyright (C) 2001-2019 Victor Matveev
+ *               Copyright (C) 2001-2022 Victor Matveev
  *
  *                                gate.cpp
  *
@@ -37,7 +37,10 @@
 
  ************************************************************************/
 
-#include "stdafx.h"
+#define _CRT_SECURE_NO_DEPRECATE
+#define _CRT_SECURE_NO_WARNINGS
+
+#include "PlatformSpecific.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

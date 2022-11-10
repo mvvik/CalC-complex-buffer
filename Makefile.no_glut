@@ -1,5 +1,9 @@
 #
-#   Calcium Calculator * CalC version X.9.9 * makefile
+#  REMOVE FILE NAME EXTENSION ".no_glut" BEFORE USING MAKE
+#
+# ************************************************************************
+#
+#   Calcium Calculator * CalC version X.10.1 * makefile
 #   Victor Matveev (C) Copyright 2001-2022 (GPLv3) 
 #   
 #   Department of Mathematical Sciences
@@ -39,12 +43,13 @@ flags = ${CXXFLAGS}
 
 # NOTE: Linker directive below is specific to Mac OS X
 # ...Change it depending on how you install GLUT/FreeGlut
-
-llibs = -lm -framework OpenGL -framework GLUT ${LDFLAGS} 
-
-#if you don't want glut graphics, simply change the above line to:
 #
-# llibs = -lm ${LDFLAGS}
+# llibs = -lm -framework OpenGL -framework GLUT ${LDFLAGS} 
+#
+#  if you don't want glut graphics, simply change the above line to:
+#  and see comments in PlatformDependent.h
+
+llibs = -lm ${LDFLAGS}
 
 CXXFLAGS = -O2 -g -pipe -Wall -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 \
 -Wp,-D_GLIBCXX_ASSERTIONS -fexceptions -fstack-protector-strong  \

@@ -31,7 +31,6 @@
 
 #ifndef CALC_MARKOV_H_included
 #define CALC_MARKOV_H_included
-#define _CRT_SECURE_NO_DEPRECATE
 
 #define MY_SEED 293847944
 

@@ -39,7 +39,6 @@
 
 #ifndef CALC_GATE_H_included
 #define CALC_GATE_H_included
-#define _CRT_SECURE_NO_DEPRECATE
 
 #define  KINETIC_DEFAULT_EPS 1.0e-6
 #define  DT_MIN 1.0e-16   // smallest time step (multiplied by current time)

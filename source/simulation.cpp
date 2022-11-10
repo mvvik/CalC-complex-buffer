@@ -1,7 +1,7 @@
 /*****************************************************************************
  *
  *                         Calcium Calculator (CalC)
- *                 Copyright (C) 2001-2019 Victor Matveev
+ *                 Copyright (C) 2001-2022 Victor Matveev
  *
  *                             simulation.cpp
  *
@@ -37,7 +37,10 @@
 
  ************************************************************************/
 
-#include "stdafx.h"
+#define _CRT_SECURE_NO_DEPRECATE
+#define _CRT_SECURE_NO_WARNINGS
+
+#include "PlatformSpecific.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -80,16 +83,16 @@ SimulationObj::SimulationObj(TokenString &TS) {
 
   strcpy(LABEL_DIM1,""); strcpy(LABEL_DIM2,""); strcpy(LABEL_DIM3,"");
 
-  if      (TS.assert("geometry","spherical") )      GEOMETRY = SPHERICAL; 
-  else if (TS.assert("geometry","conical") )        GEOMETRY = CONICAL; 
-  else if (TS.assert("geometry","cylindrical") )    GEOMETRY = CYLINDRICAL;
-  else if (TS.assert("geometry","polar") )          GEOMETRY = POLAR;
-  else if (TS.assert("geometry","cartesian.1D") )   GEOMETRY = CARTESIAN1D;
-  else if (TS.assert("geometry","cartesian.2D") )   GEOMETRY = CARTESIAN2D;
-  else if (TS.assert("geometry","spherical.3D") )   GEOMETRY = SPHERICAL3D;
-  else if (TS.assert("geometry","cylindrical.3D") ) GEOMETRY = CYLINDRICAL3D;
-  else if (TS.assert("geometry","cartesian.3D") ) { }
-  else if (TS.assert("geometry","disc.1D") || TS.assert("geometry","disc") || TS.assert("geometry","disk")) GEOMETRY = DISC;
+  if      (TS.Assert("geometry","spherical") )      GEOMETRY = SPHERICAL; 
+  else if (TS.Assert("geometry","conical") )        GEOMETRY = CONICAL; 
+  else if (TS.Assert("geometry","cylindrical") )    GEOMETRY = CYLINDRICAL;
+  else if (TS.Assert("geometry","polar") )          GEOMETRY = POLAR;
+  else if (TS.Assert("geometry","cartesian.1D") )   GEOMETRY = CARTESIAN1D;
+  else if (TS.Assert("geometry","cartesian.2D") )   GEOMETRY = CARTESIAN2D;
+  else if (TS.Assert("geometry","spherical.3D") )   GEOMETRY = SPHERICAL3D;
+  else if (TS.Assert("geometry","cylindrical.3D") ) GEOMETRY = CYLINDRICAL3D;
+  else if (TS.Assert("geometry","cartesian.3D") ) { }
+  else if (TS.Assert("geometry","disc.1D") || TS.Assert("geometry","disc") || TS.Assert("geometry","disk")) GEOMETRY = DISC;
   else if (TS.token_count("geometry"))  TS.errorMessage( TS.token_index("geometry") + 1, 0, "Unknown geometry specifier");
                                                else GEOMETRY = CARTESIAN3D;
 
@@ -124,7 +127,7 @@ SimulationObj::SimulationObj(TokenString &TS) {
   Synapse->computeFormulas(TS);
   Ca      = new FieldObj(TS);
   Ca->adjust_sources(*Ca);  // Increase current if some of it falls outsise the boundary
- kuptake = new VectorObj(Grid->Size);
+  kuptake = new VectorObj(Grid->Size);
   *kuptake = 0.0;
   Ca->kuptake = this->kuptake;
 
@@ -171,6 +174,7 @@ SimulationObj::SimulationObj(TokenString &TS) {
   Params->get_param    ("adaptive.accuracy", &m_accuracy);    Params->get_param("adaptive.dtStretch", &m_dtStretch); 
   Params->get_param    ("ODE.accuracy",      &m_ODEaccuracy); Params->get_param("adaptive.dtMax",     &m_dtMax);         
 
+  ERROR_FLAG = 0;
  }
 
 //*******************************************************************************************
@@ -188,6 +192,7 @@ SimulationObj::~SimulationObj() {
   if (Synapse)        delete Synapse;
   if (BCArray)        delete BCArray;
   if (kuptake)        delete kuptake;
+  ERROR_FLAG = 1;
 }
 
 //********************************************************************************************
@@ -332,8 +337,8 @@ void SimulationObj::Export(const char *filename)
   }
 
   fwrite( (void *)endtag, sizeof(char), strlen(endtag)+1, f);
-  fclose(f);
   fflush(f);
+  fclose(f);
 }
 
 

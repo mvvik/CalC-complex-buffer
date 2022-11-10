@@ -32,7 +32,6 @@
 
 #ifndef CALC_BOX_H_included
 #define CALC_BOX_H_included
-#define _CRT_SECURE_NO_DEPRECATE
 
 #define  SURF_XMIN   1
 #define  SURF_XMAX   2
@@ -72,7 +71,7 @@ public:
   double xmin, xmax, ymin, ymax, zmin, zmax;
 
 
-   VolumeObjClass() { isInside = 0; tokenPosition = 0;  p1 = p2 = p3 = p4 = p5 = p6 = xmin = xmax = ymin = ymax = zmin = zmax = 0.0; };
+  VolumeObjClass() { isInside = 0; isObstacle = 0; tokenPosition = 0;  p1 = p2 = p3 = p4 = p5 = p6 = xmin = xmax = ymin = ymax = zmin = zmax = 0.0; };
    VolumeObjClass(TokenString &pars, long pos, int isObst);
    VolumeObjClass(const VolumeObjClass &v) { this->set(v); }
   ~VolumeObjClass() {  };

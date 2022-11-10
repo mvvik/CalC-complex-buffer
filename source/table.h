@@ -31,7 +31,6 @@
 
 #ifndef CALC_TABLE_H_included
 #define CALC_TABLE_H_included
-#define _CRT_SECURE_NO_DEPRECATE
 
 #define TABLE_TOKEN  "table"
 

@@ -36,10 +36,6 @@
 
 #ifndef CALC_SIMULATION_H_included
 #define CALC_SIMULATION_H_included
-#define _CRT_SECURE_NO_DEPRECATE
-
-#define RETURN_NORMAL 0  // Return values for the ADI single-stepping routines
-#define RETURN_END    1  // Return value when the end of simulation run has been reached
 
 typedef void (*CaMethod)       (FieldObj &,    VectorObj &,   BufferArray &, BufferArray &, double);
 typedef void (*BufMethod)      (BufferArray &, BufferArray &, VectorObj &,   VectorObj &,   double); 

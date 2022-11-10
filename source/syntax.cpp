@@ -28,7 +28,9 @@
 
  ************************************************************************/
 
-#include "stdafx.h"
+#define _CRT_SECURE_NO_WARNINGS
+
+#include "PlatformSpecific.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -158,7 +160,7 @@ char *TokenString::getVarName(long p, const char *what, int offset) {
 			}					
 	}   
 	catch (int ERR) {   perror("Error in getVarName: ");
-	errorMessage(p, makeMessage("Bad %s definition", what) ); }
+	                    errorMessage(p, makeMessage("ERROR=%d: Bad %s definition", ERR, what) ); }
 
 	return str;
 }
@@ -805,7 +807,7 @@ char *TokenString::get_string_param(const char *str, char *result) {
 
 //***************************************************************************
 
-bool TokenString::assert(const char *var, const char *val) {
+bool TokenString::Assert(const char *var, const char *val) {
 
 	if (token2_count(var,val) || token3_count(var,ASSIGN_TOKEN,val)) return true;  
 	else return false;

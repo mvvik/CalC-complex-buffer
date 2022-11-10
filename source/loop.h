@@ -5,8 +5,7 @@
  *
  *                               loop.h
  *
- *  LoopObj variable contains data for the (nested) "for" loop script 
- *  pre-processor statement
+ *  LoopObj variable contains data for the (nested) "for" loop script statement
  *
  **************************************************************************
  
@@ -29,7 +28,6 @@
 
 #ifndef CALC_LOOP_H_included
 #define CALC_LOOP_H_included
-#define _CRT_SECURE_NO_DEPRECATE
 
 #define MAX_FOR_STEPS 1000000
 

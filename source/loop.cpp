@@ -1,14 +1,13 @@
 /*****************************************************************************
  *
  *                        Calcium Calculator (CalC)
- *                 Copyright (C) 2001-2019 Victor Matveev
+ *                 Copyright (C) 2001-2022 Victor Matveev
  *
  *                                loop.cpp
  *
- *  LoopObj variable contains data for the (nested) "for" loop script pre-processor
- *  statement
+ *  LoopObj variable contains data for the (nested) "for" loop script statement
  *
- ****************************************************************************
+ ******************************************************************************
  
     This file is part of Calcium Calculator (CalC).
 
@@ -27,7 +26,10 @@
 
  ******************************************************************************/
 
-#include "stdafx.h"
+#define _CRT_SECURE_NO_DEPRECATE
+#define _CRT_SECURE_NO_WARNINGS
+
+#include "PlatformSpecific.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -45,6 +47,8 @@
 #include "fplot.h"
 #include "loop.h"
 
+extern char* globalLabelX;
+
 //**********************************************************************************************
 
 int getTrackVarNum(TokenString &TS) {
@@ -54,6 +58,8 @@ int getTrackVarNum(TokenString &TS) {
   }
   return num;
 }
+
+//**********************************************************************************************
 
 long getTrackVar(TokenString &TS, int n, int *iGraph, int *iSets) {  // n = 0..track var number - 1
   int num = 0, m;
@@ -67,33 +73,32 @@ long getTrackVar(TokenString &TS, int n, int *iGraph, int *iSets) {  // n = 0..t
   throw makeMessage("Could not find track variable number %d", n);
 }
 
-
 //**********************************************************************************************
 
 LoopObj::LoopObj(TokenString &TS, VectorObj *res) : num( TS.token_count(LOOP_TOKEN) ), 
 						    var(num), var0(num), dvar(num),
-                                                    index(new int[num]), limit(new int[num]), 
-                                                    ids(new char *[num]), tp(new char[num])
+                            index(new int[num]), limit(new int[num]), 
+                            ids(new char *[num]),  tp(new char[num])
   {
-  int i;
-
-  count = 0;
-  fCount = 0.0;
+  count   = 0;
+  fCount  = 0.0;
   started = false;
-  if (!num) { steps = 1; return; }
+  steps   = 1;
+
+  if (!num) {
+      plots = new PlotArray(0);
+      return;   
+  }                                // ***  Below this line: only if "for" loop present ****
 
   char prefix[256], filename[256];
+  double v0, v1, dv = 1.0;
+  int i;
 
   strcpy(prefix, "");
-  result = res;
-
-  double v0, v1, dv = 1.0;
-
+  result   = res;
   trackIDs = new char *[res->size + 1];
 
   for (i = 0; i < res->size; i++) trackIDs[i] = TS.StrCpy( getTrackVar(TS, i) );
-
-  steps = 1;
   
   for (i = 0; i < num; i++) 
   try    {       
@@ -105,10 +110,9 @@ LoopObj::LoopObj(TokenString &TS, VectorObj *res) : num( TS.token_count(LOOP_TOK
       dv = ExpressionObj(TS, TS.token_index("step", i+1) + 1, 
                              "Error in the \"for\" loop: bad \"step\" expression").Evaluate();
 
-      if ( ( fabs(v0 - int(v0+0.5)) < 1.0e-6 ) && 
-           ( fabs(v1 - int(v1+0.5)) < 1.0e-6 ) &&  
-           ( fabs(dv - int(dv+0.5)) < 1.0e-6 ) )  
-      tp[i] = 'i'; else tp[i] = 'd';
+      if (  ( fabs(v0 - int(v0+0.5)) < 1.0e-6 ) && 
+            ( fabs(v1 - int(v1+0.5)) < 1.0e-6 ) &&  
+            ( fabs(dv - int(dv+0.5)) < 1.0e-6 )  )   tp[i] = 'i'; else tp[i] = 'd';
 
       var.elem[i] = var0.elem[i] = v0;
       dvar.elem[i] = dv;
@@ -121,36 +125,45 @@ LoopObj::LoopObj(TokenString &TS, VectorObj *res) : num( TS.token_count(LOOP_TOK
 
       if (VERBOSE) fprintf(stderr, "\n### For loop: for %s = %g to %g step %g\n", ids[i], v0, v1, dv);
   } 
-  catch (char *str) { TS.errorMessage( TS.token_index(LOOP_TOKEN, i+1), str); }
-  catch (int ERR)   { TS.errorMessage( TS.token_index(LOOP_TOKEN, i+1), 0, "Bad \"for\" loop statement" ); }
+  catch (char* str) { TS.errorMessage(TS.token_index(LOOP_TOKEN, i + 1), str); }
+  catch (int ERR)   { TS.errorMessage(TS.token_index(LOOP_TOKEN, i + 1), 0,
+                                      makeMessage("ERROR %d: Bad \"for\" loop statement", ERR));
+                    }
 
   PlotObj::UPDATE_STEPS = steps;
-
-  double *xPtr, xMax; // the pointer to x-label variable for all "track" graphs, and its max value
-  char   *xlabel;
-
-  if (num == 1) {
-    xlabel = new char[strlen(ids[0]) + 3];
-    strcpy(xlabel, ids[0]);
-    xPtr = var();
-    xMax = (limit[0] - 1) * fabs(dvar[0]);
-  }
-  else {
-    xlabel = StrCpy("iteration");
-    xPtr = &fCount;
-    xMax = double( steps );
-  }
 
   if ( TS.token2_count("plot.method","xmgr") || TS.token3_count("plot.method","=","xmgr") ) {
      plots = new PlotArray(result->size + TS.token_count("track"));
      plots->method = METHOD_XMGR;
      XmgrPlot::init(TS, TS.token_count("track"));
   }
-  else { 
+#ifndef _NO_GLUT_
+  else if (TS.token2_count("plot.method", "gl") || TS.token3_count("plot.method", "=", "gl")) {
+      plots = new PlotArray(2 * result->size);
+      plots->method = METHOD_GL;
+      int graphs = result->size;
+      GlPlotObj::init(TS, graphs, 1, 1);
+      plots->gl_on = 1;
+  }
+#endif
+  else {
      plots = new PlotArray(result->size);
      plots->method = METHOD_MUTE;
   }
  
+  double* xPtr, xMax; // the pointer to x-label variable for all "track" graphs, and its max value
+
+  if (num == 1) {
+      globalLabelX = StrCpy(ids[0]);
+      xPtr = var();
+      xMax = v0 + (limit[0] - 1) * fabs(dvar[0]);
+  }
+  else {
+      globalLabelX = StrCpy("iteration");
+      xPtr = &fCount;
+      xMax = double(steps);
+  }
+
   long pos;
   if (TS.token_count("plot.print", &pos)) TS.line_string(pos + 1, prefix);
 
@@ -166,12 +179,18 @@ LoopObj::LoopObj(TokenString &TS, VectorObj *res) : num( TS.token_count(LOOP_TOK
     else if ( plots->method == METHOD_XMGR ) {
       getTrackVar(TS, i, &xmgrGraph, &xmgrSets);
       if (xmgrGraph > xmgrGraph0) {
-         plots->set_plot( new XmgrPointPlot(xmgrSets, 0, xMax, xlabel) );
+         plots->set_plot( new XmgrPointPlot(xmgrSets, 0, xMax) );
          graphNum = ( xmgrGraph0 =  xmgrGraph ) + i;
       }
       ((XmgrPointPlot *)(plots->array[graphNum]))->set_set( (*result)()+i, xPtr, trackIDs[i]);
       plots->set_plot( new MutePointPlot( (*result)()+i, xPtr, 0, xMax, filename, trackIDs[i]) );
     }
+#ifndef _NO_GLUT_
+    else if (plots->method == METHOD_GL) {
+        plots->set_plot(new GlPointPlot((*result)() + i, xPtr, 0, xMax, trackIDs[i]));
+        plots->set_plot(new MutePointPlot((*result)() + i, xPtr, 0, xMax, filename, trackIDs[i]));
+    }
+#endif // !_NO_GLUT_
   }
 
   }
@@ -184,7 +203,7 @@ LoopObj::LoopObj(TokenString &TS, VectorObj *res) : num( TS.token_count(LOOP_TOK
    int i;
    if (!num) return;
 
-   delete plots;
+   if (plots && plots->plot_num) delete plots;
    delete [] tp;
    delete [] index;
    delete [] limit;
@@ -241,7 +260,6 @@ void LoopObj::step() {
     {
     int i;
     if (!num) return;
-
     plots->draw_all();  
 
     if (VERBOSE > 0 && result->size) {
