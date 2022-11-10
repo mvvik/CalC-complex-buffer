@@ -8,4 +8,4 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 #define _isnan(X)  isnan(X)
-#define _finite(X) finite(X)
+#define _finite(X) isfinite(X)

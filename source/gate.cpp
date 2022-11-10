@@ -173,10 +173,11 @@ void KineticObj::setNames_ODE_IC(class TokenString *Param, long *exprStart)
     }
     exprStart[ident_num + i] = pos + 1;
     (*var)[i] = 0.0;
-    if ( Param->token3_count(var_id[i], "(", "0", &pos ) )
+    if ( (Param->token3_count(var_id[i], "(", "0", &pos )) )  {
       if ( Param->equal(pos + 1,")")  && Param->equal(pos + 2, "=") ) 
         (*var)[i] = ExpressionObj(*Param, pos + 3, "Bad expression for the initial condition").Evaluate();
       else Param->errorMessage(pos + 1, 0, "Bad expression for the initial condition"); 
+	}
   }
 }
 //**************************************************************************
@@ -364,12 +365,13 @@ double KineticObj::RungeKuttaAdaptive(double T, double eps, class PlotArray *plo
 {
   double Time0 = Time, eqTime = 0.0, dthold;
   long   count = 0;
-  double NORMeps, norm;
+  double NORMeps = eps, norm = 0.0;
 
-  if ( eq_flag )                                       // 1st arg is initial equilibration time
-    { dt = T; T = 1e20; NORMeps = 10*eps; }  // accuracy for the zero norm condition should be less 
-                                                       // than the accuracy of the difference method
-  else {
+  if ( eq_flag )  { 
+	dt = T; T = 1e20;  
+	NORMeps = 10*eps;   // accuracy for the norm equilibrium condition should be less 
+                        // than the accuracy of the difference method
+  } else {
     if ( T <= 0 ) return Time;
     else if (dt <= 0) dt = T;    // dt is the initial time step, T is the integration time, ceiling is the 
     T += Time;                   //                                                  total simulation time
@@ -392,11 +394,11 @@ double KineticObj::RungeKuttaAdaptive(double T, double eps, class PlotArray *plo
   static const double b41 = 0.3, b42 = -0.9, b43 = 1.2;
   static const double b51 = -11.0/54.0, b52 = 2.5, b53 = -70.0/27.0, b54 = 35.0/27.0;
   static const double b61 = 1631.0/55296.0, b62 = 175.0/512.0, b63 = 575.0/13824.0, b64 = 44275.0/110592.0, 
-               b65 = 253.0/4096.0;
+					  b65 = 253.0/4096.0;
 
   static const double c1  = 37.0 / 378.0,     c3 = 250.0 / 621.0, c4 = 125.0 / 594.0, c6 = 512.0 / 1771.0;
   static const double cc1 = 2825.0 / 27648.0, cc3 = 18575.0 / 48384.0, cc4 = 13525.0 / 55296.0, cc5 = 277.0/14336.0,
-               cc6 = 0.25;
+                      cc6 = 0.25;
 
  VectorObj v1(var_num), dv(var_num); 
  VectorObj k1(var_num), k2(var_num), k3(var_num), k4(var_num), k5(var_num), k6(var_num);

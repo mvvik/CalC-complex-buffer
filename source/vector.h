@@ -101,6 +101,7 @@ class VectorObj {
      switch(nDIMS) { case 1: return checkerBoardNorm1D();
                      case 2: return checkerBoardNorm2D(S1);
 					 case 3: return checkerBoardNorm3D(S1, S2);
+					 default: return 0.0;
 	 }
   }
 

@@ -433,12 +433,12 @@ void SimulationObj::FixedTimeStep(double T, int n)
 
 long SimulationObj::Adaptive(double T)  {
   
-  FieldObj    oldCa(*Ca), CaNew(*Ca), CaNew2(*Ca);
-  BufferArray BufNew(*Buffers), oldBuf(*Buffers);
-  double      one, two, error, old_dt = m_dt0, dt = m_dt0;
-  int         rvalue = 0, flag = 0;
-  long        between_checks = 0, total_steps = 0, since_last_divide = 0, total_backsteps = 0;
-  int         errorODE = 0;
+  FieldObj      oldCa(*Ca), CaNew(*Ca), CaNew2(*Ca);
+  BufferArray   BufNew(*Buffers), oldBuf(*Buffers);
+  double        one, two, error, old_dt = m_dt0, dt = m_dt0;
+  int           rvalue = 0;
+  long          between_checks = 0, total_steps = 0, since_last_divide = 0, total_backsteps = 0;
+  int           errorODE = 0;
 
   RunStatusString *ODEstatus = 0, *status = 0;
   if (VERBOSE > 2)    status = new RunStatusString(40,"time", &(Ca->Time), T, "dt", &dt);
@@ -450,7 +450,7 @@ long SimulationObj::Adaptive(double T)  {
 
   while(1) {  // ******************************************************************
 
-    unsigned long i=0;
+    long i=0;
     
     while (++i <= between_checks && !rvalue) { // loop over n="between_checks" iterations
       dt *= m_dtStretch;
@@ -601,11 +601,11 @@ void SimulationObj::Run() {
         double exper = calcium_gain(Ca, Buffers);
         double theor = *(this->ResolveID("_Charge"));
         CHARGE_LOSS = ( exper == theor ) ? 0.0 : 100.0 * (1 - (exper + 1e-20) / (theor + 1e-20) );
-        if (VERBOSE) 
+        if (VERBOSE > 0) {
 			if (CHARGE_LOSS > 0)
 				 fprintf(stderr," ## charge loss = %.4g%% (net charge = %g, integrated flux = %g), %ld iterations \n",  CHARGE_LOSS, exper, theor, nIterations ); 
 			else fprintf(stderr," ## charge gain = %.4g%% (net charge = %g, integrated flux = %g), %ld iterations \n", -CHARGE_LOSS, exper, theor, nIterations ); 
-
+		}
 		Ca->killCurrents();
   } // i loop over runs
 

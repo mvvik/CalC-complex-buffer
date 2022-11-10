@@ -439,7 +439,7 @@ bool   flag = true;
 
   for (int j = 0; j < num; j++)  {
     ind = field_index + j * incr;
-    if (field->ptype[ind] & VARY_MASK)  
+    if (field->ptype[ind] & VARY_MASK)  {
       if (flag) {
         fmin = get_value(field_index);
         fmax = get_value(field_index); 
@@ -450,6 +450,7 @@ bool   flag = true;
         if (f < fmin) fmin = f;  
           else if (f > fmax) fmax = f;
       }
+	}
   }
     
   //fprintf(stderr,"fmin=%g fmax=%g \n",fmin,fmax);
@@ -1286,7 +1287,7 @@ int PlotArray::get_plot_num(TokenString &TS)
 
 	if (widgetLength < 3) {
         char clockchar[4] = { '-', '\\', '|', '/' };
-        widgetCount = ++widgetCount % 4;
+        widgetCount = (widgetCount + 1) % 4;
         widgetStr[0] = clockchar[widgetCount];
      }
 
@@ -1310,7 +1311,7 @@ int PlotArray::get_plot_num(TokenString &TS)
   PlotArray::PlotArray(SimulationObj &SO)
   {
 	  long     POS;
-	  char     prefix[128], fileName[255];  
+	  char     prefix[128], fileName[2048];  
 	  double   SimTime = SO.totalSimTime;
 	  int      vcount = 0;  // counter for the verbose comment print
 
@@ -1361,7 +1362,7 @@ int PlotArray::get_plot_num(TokenString &TS)
 		  if ( equal(ptype, "point") || equal(ptype, "mute") || SO.ResolveID(ptype) )
 		  {  
 			  double *time_ptr = 0, *kin_ptr = 0;
-			  int     set_num  = 1,  xmgr_plot;
+			  int     set_num  = 1,  xmgr_plot = 0;
 
 			  if ( SO.ResolveID(ptype) ) POS--;
 

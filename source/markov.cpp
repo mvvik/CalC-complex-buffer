@@ -132,7 +132,7 @@ void MarkovObj::set_matrix(TokenString &Param, class VarList *VL)
         transitions[index].type = NUMBER_TYPE;
         transitions[index].val  = value;
       }
-      else if (ptr = VL->ResolveID(element) ) {
+      else if ( (ptr = VL->ResolveID(element)) ) {
         transitions[index].type = POINTER_TYPE;
         transitions[index].ptr = ptr;
       }

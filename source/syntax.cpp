@@ -119,7 +119,7 @@ void TokenString::errorMessage(long p, char *message1, const char *message2) {
 
 	delete [] lineInfo;
 
-	fprintf(stderr, message);
+	fprintf(stderr, "%s\n", message);
 	throw 1;
 }
 
@@ -149,12 +149,13 @@ char *TokenString::getVarName(long p, const char *what, int offset) {
 		if (p > 0) if ( this->equal(p - 1, "cooperative") ) p--;
 
 		if (p > 0) 
-			if ( !isLineStart( token_ptr[p - 1] ) )
+			if ( !isLineStart( token_ptr[p - 1] ) )  {
 				if ( !equal(p + 1, "min") && !equal(p + 1, "max") )
 					errorMessage( p - 1, 0, "Expected a new line at this position" );
 				else if (p > 1)
 					if ( !isLineStart( token_ptr[p - 2]) )
-						errorMessage( p - 2, 0, "Expected a new line at this position");  
+						errorMessage( p - 2, 0, "Expected a new line at this position");
+			}					
 	}   
 	catch (int ERR) {   perror("Error in getVarName: ");
 	errorMessage(p, makeMessage("Bad %s definition", what) ); }
@@ -268,67 +269,68 @@ void TokenString::parse(const char *fname, const char *extra1, const char *extra
 						( waitForElse[ifLevel]   && !(::equal(token, ELSE_TOKEN) || ::equal(token, ENDIF_TOKEN) ) ) )  
 					{ ptr0 = ptr1; continue; }
 
-					if ( ::equal(token, THEN_TOKEN) ) { 
-						if ( ifLevel < 0 ) throw ::StrCpy("\"then\" without an \"if\"");
-						else if ( reachedThen[ifLevel] )  throw ::StrCpy("Missplaced \"then\" statement");
-						addToken(token, currentLine, currentScript);
-						exprFlag = false;
-						ptr0 = ptr1;
-						double condition = ExpressionObj(*this, ifStart[ifLevel], "Cannot evaluate the \"if\" condition").Evaluate();
-						reachedThen[ifLevel] = true;
-						ifClause[ifLevel] = ( condition > 0 ) ? true : false;
-						if ( !ifClause[ifLevel] ) waitForElse[ifLevel] = true;
-						continue;
-					}
+				if ( ::equal(token, THEN_TOKEN) ) { 
+					if ( ifLevel < 0 ) throw ::StrCpy("\"then\" without an \"if\"");
+					else if ( reachedThen[ifLevel] )  throw ::StrCpy("Missplaced \"then\" statement");
+					addToken(token, currentLine, currentScript);
+					exprFlag = false;
+					ptr0 = ptr1;
+					double condition = ExpressionObj(*this, ifStart[ifLevel], "Cannot evaluate the \"if\" condition").Evaluate();
+					reachedThen[ifLevel] = true;
+					ifClause[ifLevel] = ( condition > 0 ) ? true : false;
+					if ( !ifClause[ifLevel] ) waitForElse[ifLevel] = true;
+					continue;
+				}
 
-					else if ( ::equal(token, ELSE_TOKEN) ) {
-						if ( ifLevel < 0 ) throw ::StrCpy("\"else\" without an \"if\" ");
-						else if ( !reachedThen[ifLevel] ) throw ::StrCpy("\"else\" without a \"then\" "); 
-						else if (ifClause[ifLevel]) waitForEndif[ifLevel] = true; else waitForElse[ifLevel] = false; 
-					}
+				else if ( ::equal(token, ELSE_TOKEN) ) {
+					if ( ifLevel < 0 ) throw ::StrCpy("\"else\" without an \"if\" ");
+					else if ( !reachedThen[ifLevel] ) throw ::StrCpy("\"else\" without a \"then\" "); 
+					else if (ifClause[ifLevel]) waitForEndif[ifLevel] = true; else waitForElse[ifLevel] = false; 
+				}
 
-					else if ( ::equal(token, ENDIF_TOKEN) ) {
-						if ( ifLevel < 0 ) throw ::StrCpy("\"endif\" without an \"if\" ");
-						else if ( !reachedThen[ifLevel] ) throw ::StrCpy("\"endif\" without a \"then\" ");
-						else ifLevel--;
-						if ( (ptr0 = ptr1) >= last ) break;  //*** remove "endif" from token array: it might cause a syntax error 
-						else continue;
-					}
+				else if ( ::equal(token, ENDIF_TOKEN) ) {
+					if ( ifLevel < 0 ) throw ::StrCpy("\"endif\" without an \"if\" ");
+					else if ( !reachedThen[ifLevel] ) throw ::StrCpy("\"endif\" without a \"then\" ");
+					else ifLevel--;
+					if ( (ptr0 = ptr1) >= last ) break;  //*** remove "endif" from token array: it might cause a syntax error 
+					else continue;
+				}
 
-					else if ( ::equal(token,"include") ) {  //*** Import data file
-						if ( (ptr0 = ptr1) >= last ) break;
-						getToken(ptr0,ptr1,last, exprFlag);
-						char *input_file = ::StrCpy(ptr0,ptr1-ptr0);
-						char *filename = get_string(input_file);
-						parse(filename, 0, 0, argc, argv);
-						delete [] input_file; delete [] filename;
-						if ( (ptr0 = ptr1) >= last ) break; 
-						else continue;
-					}
-					else if ( ::equal(token,"echo") ) {    //*** Echo a message
-						if ( (ptr0 = ptr1) >= last ) break;
-						getToken(ptr0,ptr1,last, exprFlag);
-						strncpy(token,ptr0,ptr1-ptr0); token[ptr1-ptr0] = '\0';
-						char *s = get_string(token);
-						fprintf(stderr,"\n >>> USER MESSAGE: %s\n",s);
-						delete [] s;
-						if ( (ptr0 = ptr1) >= last ) break; 
-						else continue;
-					}
+				else if ( ::equal(token,"include") ) {  //*** Import data file
+					if ( (ptr0 = ptr1) >= last ) break;
+					getToken(ptr0,ptr1,last, exprFlag);
+					char *input_file = ::StrCpy(ptr0,ptr1-ptr0);
+					char *filename = get_string(input_file);
+					parse(filename, 0, 0, argc, argv);
+					delete [] input_file; delete [] filename;
+					if ( (ptr0 = ptr1) >= last ) break; 
+					else continue;
+				}
+				else if ( ::equal(token,"echo") ) {    //*** Echo a message
+					if ( (ptr0 = ptr1) >= last ) break;
+					getToken(ptr0,ptr1,last, exprFlag);
+					strncpy(token,ptr0,ptr1-ptr0); token[ptr1-ptr0] = '\0';
+					char *s = get_string(token);
+					fprintf(stderr,"\n >>> USER MESSAGE: %s\n",s);
+					delete [] s;
+					if ( (ptr0 = ptr1) >= last ) break; 
+					else continue;
+				}
 
-					if (token[0] == '$')
-						if (token[1] == '$') sprintf(token,"%d",argc);  //*** Get number of command-line arguments
-						else    
-						{                //*** Get a command-line argument
-							double farg;
-							if ( !isConst(token+1, &farg) ) throw makeMessage("Bad command-line argument \"%s\" ", token);
-							int arg = int(farg + 0.5);
-							if (arg >= argc) throw makeMessage("Command-line argument $%d not specified\n", arg);
-							strcpy( token, argv[ arg ] );
-						}
-
-						addToken(token, currentLine, currentScript);     //!!!  All contingencies checked -> add the token to the list  !!!
-						ptr0 = ptr1;
+				if (token[0] == '$') {
+					if (token[1] == '$') sprintf(token,"%d",argc);  //*** Get number of command-line arguments
+					else    
+					{                //*** Get a command-line argument
+						double farg;
+						if ( !isConst(token+1, &farg) ) throw makeMessage("Bad command-line argument \"%s\" ", token);
+						int arg = int(farg + 0.5);
+						if (arg >= argc) throw makeMessage("Command-line argument $%d not specified\n", arg);
+						strcpy( token, argv[ arg ] );
+					}
+				}
+				
+				addToken(token, currentLine, currentScript);     //!!!  All contingencies checked -> add the token to the list  !!!
+				ptr0 = ptr1;
 
 			} while (ptr1 < last ); // loop until end of line
 
@@ -377,39 +379,35 @@ void TokenString::getToken(char *&ptr0, char *&ptr1, char *last, bool expression
 	for (i = 0; i < ALIAS_NUM; i++)      // *** 1. Look for alias tokens first
 		if (::equal_(ptr0,aliasArray[2*i]) ) { ptr1 += strlen(aliasArray[2*i]); return; }
 
-		if (expression_flag)                 // *** 2. Look for numerical expression tokens next
-			for (i=0; i< TYPE_NUM; i++)         // except for "mod", "and" and "or" - no priority to these!
-				if ( ::equal_(ptr0, type_id[i]) && i != 3 && i != 12 && i != 13) { ptr1 += strlen(type_id[i]); return; }
+	if (expression_flag)                 // *** 2. Look for numerical expression tokens next
+		for (i=0; i< TYPE_NUM; i++)         // except for "mod", "and" and "or" - no priority to these!
+			if ( ::equal_(ptr0, type_id[i]) && i != 3 && i != 12 && i != 13) { ptr1 += strlen(type_id[i]); return; }
 
-				for (i = 0; i < SPECIAL_NUM; i++)    // *** 3. Then look for other special (non-delimited) tokens
-					if (::equal_(ptr0,specialArray[i]) ) { ptr1 += strlen(specialArray[i]); return; }
+	for (i = 0; i < SPECIAL_NUM; i++)    // *** 3. Then look for other special (non-delimited) tokens
+		if (::equal_(ptr0,specialArray[i]) ) { ptr1 += strlen(specialArray[i]); return; }
 
+	if ( is_short_token(*ptr1) && !is_sign(*ptr1) ) { ptr1++; return; }   // 4. *** Single-character token
 
-					if ( is_short_token(*ptr1) && !is_sign(*ptr1) ) { ptr1++; return; }   // 4. *** Single-character token
+	if ( is_sign(*ptr1) ) {
+		ptr1++;         // *** 5. A sign is a separate token only in an expression
+	}
 
-					if ( is_sign(*ptr1) ) {
-						ptr1++;         // *** 5. A sign is a separate token only in an expression
-					}
+	if ( is_numeral(*ptr1) || (*ptr1 == '.' && is_numeral(ptr1[1]) ) ) {    // getting a number
+		while ( is_numeral(*ptr1) ) ptr1++;
+		if (*ptr1 == '.') ptr1++;
+		while ( is_numeral(*ptr1) ) ptr1++;
+		if ( (*ptr1 == 'e' || *ptr1 == 'E') && 
+			( is_numeral(ptr1[1]) || ( is_sign(ptr1[1]) && is_numeral(ptr1[2]) ) ) ) {  // getting an exponent
+				ptr1++;
+				if ( is_sign(*ptr1) ) ptr1++;
+				while ( is_numeral(*ptr1) ) ptr1++;
+		}
+		else                                                          // otherwise it's a weird identifier  
+			while (!is_short_token(*ptr1) && !is_delim(*ptr1)) ptr1 ++; // (as in "plot 2D", for instance)
+		return;
+	}
 
-					if ( is_numeral(*ptr1) || (*ptr1 == '.' && is_numeral(ptr1[1]) ) ) {    // getting a number
-						while ( is_numeral(*ptr1) ) ptr1++;
-						if (*ptr1 == '.') ptr1++;
-						while ( is_numeral(*ptr1) ) ptr1++;
-						if ( (*ptr1 == 'e' || *ptr1 == 'E') && 
-							( is_numeral(ptr1[1]) || ( is_sign(ptr1[1]) && is_numeral(ptr1[2]) ) ) ) {  // getting an exponent
-								ptr1++;
-								if ( is_sign(*ptr1) ) ptr1++;
-								while ( is_numeral(*ptr1) ) ptr1++;
-						}
-						else                                                          // otherwise it's a weird identifier  
-							while (!is_short_token(*ptr1) && !is_delim(*ptr1)) ptr1 ++; // (as in "plot 2D", for instance)
-						return;
-					}
-
-					while (!is_short_token(*ptr1) && !is_delim(*ptr1))  // some sort of an identifier
-						ptr1 ++;
-
-					return;
+	while (!is_short_token(*ptr1) && !is_delim(*ptr1)) ptr1 ++;  // some sort of an identifie
 }
 
 //***************************************************************************
@@ -469,7 +467,7 @@ int TokenString::token_count(const char *token, long *p)
 	for (long i=0; i<token_num; i++)  
 		if ( equal(i, token) ) { if (p && !cnt) *p = i; cnt++; }
 
-		return cnt;
+	return cnt;
 }
 
 //***************************************************************************
@@ -479,7 +477,7 @@ int TokenString::token2_count(const char *token1, const char *token2, long *p)
 	int cnt = 0;
 	for (long i = 1; i < token_num; i++)
 		if ( equal(i-1, token1) && equal(i, token2) ) { if (p && !cnt) *p = i; cnt++; }
-		return cnt;
+	return cnt;
 }
 
 //***************************************************************************
@@ -489,7 +487,7 @@ int TokenString::token3_count(const char *token1, const char *token2, const char
 	int cnt = 0;
 	for (long i = 2; i < token_num; i++)
 		if ( equal(i-2, token1) && equal(i-1, token2) && equal(i, token3) ) { if (p&& !cnt) *p = i; cnt++; }
-		return cnt;
+	return cnt;
 }
 
 //***************************************************************************
@@ -497,7 +495,6 @@ int TokenString::token3_count(const char *token1, const char *token2, const char
 void TokenString::print(const char *fname)
 {
 	FILE *f = fopenAssure(fname, "w", "TokenString printing","");
-
 	print(f);
 }
 
@@ -518,8 +515,7 @@ char *TokenString::linePrint(long p, FILE *f)
 {
 	char message[1024];  strcpy(message, "");
 	long p0 = p - 1, p1 = p + 1;
-	long i;
-	int  j;
+	long i, j;
 
 	while (p0 >= 0) 
 		if ( lineNum[p0] == lineNum[p] ) p0--; else break;
@@ -539,11 +535,11 @@ char *TokenString::linePrint(long p, FILE *f)
 	strcat(message,"\n ");
 
 	for (i = p0; i <= lastInLine(p); i++) 
-		for (j = 0; j < strlen(token_ptr[i]) + 1; j++) 
+		for (j = 0; j < long(strlen(token_ptr[i]) + 1); j++) 
 			if (i < p) strcat(message," ");
 			else strcat(message,"^");
 
-			return ::StrCpy(message);
+	return ::StrCpy(message);
 }
 //***************************************************************************
 
@@ -711,26 +707,27 @@ bool TokenString::isNumberParam(const char *s, long &pFirst, double *result)
 		char arg[1024];
 		strcpy(arg, s);
 		char *name = strtok( arg, "{");
-		if ( !isParam(name, &pFirst) ) 
+		if ( !isParam(name, &pFirst) ) {
 			if ( token_count(name, &pFirst) ) pFirst++; // access definition keywords (like "grid n m")
 			else return false;
+		}
 
-			char  *sind;
-			if ( !( sind = strtok( '\0', "}") ) ) errorMessage( token_index(s), 0, "No closing curly bracket" );  
+		char  *sind;
+		if ( !( sind = strtok( NULL, "}") ) ) errorMessage( token_index(s), 0, "No closing curly bracket" );  
 
-			double dind;
-			if ( !isConst(sind, &dind) )  errorMessage( token_index(s), 0, "Bad array index");  
+		double dind;
+		if ( !isConst(sind, &dind) )  errorMessage( token_index(s), 0, "Bad array index");  
 
-			long signed ind   = pFirst + long( dind + 0.5 ) - 1;
-			pLast = lastInLine(pFirst);
-			if ( ind > pLast) 
-				errorMessage( token_index(s), makeMessage("Array index is too large: %d > %d", 
-				int( ind-pFirst ), int(pLast-pFirst)) );
-			else if ( ind < pFirst - 1 ) 
-				errorMessage( token_index(s), 0, "Array index cannot be negative");
+		long signed ind   = pFirst + long( dind + 0.5 ) - 1;
+		pLast = lastInLine(pFirst);
+		if ( ind > pLast) 
+			errorMessage( token_index(s), makeMessage("Array index is too large: %d > %d", 
+			int( ind-pFirst ), int(pLast-pFirst)) );
+		else if ( ind < pFirst - 1 ) 
+			errorMessage( token_index(s), 0, "Array index cannot be negative");
 
-			if (result) *result = ( ind == pFirst - 1 ? double(pLast-pFirst+1) : get_double(ind) );
-			return true;
+		if (result) *result = ( ind == pFirst - 1 ? double(pLast-pFirst+1) : get_double(ind) );
+		return true;
 	}
 
 	if ( !isParam(s, &pFirst) )  return false;
@@ -749,13 +746,13 @@ double TokenString::get_param(const char *s, double *res, const char *message)
 	double r;
 	long pos;
 
-	if ( !isNumberParam(s, pos, &r) )  
+	if ( !isNumberParam(s, pos, &r) )  {
 		if (message) errorMessage( token_index(s), 0, message );
 		else return -1.0;
+	}
 
-		if (res) *res = r;
-
-		return r;
+	if (res) *res = r;
+	return r;
 }
 
 //***************************************************************************
@@ -919,7 +916,7 @@ void TokenString::printResults(class VarList *VL) {
 
 	int    i;
 	long   p;
-	char   *fileStr;
+	char   *fileStr = NULL;
 	FILE   *f;
 	char   temp[4000];
 	bool   fileSpec = false;
@@ -933,16 +930,16 @@ void TokenString::printResults(class VarList *VL) {
 	for (i = 0; i < token_count("print"); i++) {
 		p = token_index("print", i+1) + 1;
 		if ( !fileSpec ) fileStr = get_string(p++); 
-		f = fopenAssure(fileStr,"w","the output of \"print\" statements", "");
-		fprintf( f,"%s\n", line_string( p, temp, VL ) );
+		f = fopenAssure(fileStr, "w", "the output of \"print\" statements", "");
+		fprintf( f, "%s\n",  line_string( p, temp, VL ) );
 		if ( (f != (FILE *)stdout) && (f != (FILE *)stderr) ) fclose(f); 
 	}
 
 	for (i = 0; i < token_count("append"); i++) {
 		p = token_index("append", i+1) + 1;
 		if  ( !fileSpec ) fileStr = get_string(p++);
-		f = fopenAssure(fileStr,"a","the output of \"append\" statements", "");
-		fprintf( f,"%s\n", line_string( p, temp, VL ) );
+		f = fopenAssure(fileStr, "a", "the output of \"append\" statements", "");
+		fprintf( f, "%s\n", line_string( p, temp, VL ) );
 		if ( (f != (FILE *)stdout) && (f != (FILE *)stderr) ) fclose(f); 
 	}
 }
@@ -952,9 +949,7 @@ void TokenString::printResults(class VarList *VL) {
 int TokenString::tokens_to_eol(long p)
 {
 	int    num = 0;
-
 	while ( !isLineEnd(token_ptr[ p ]) && p < token_num ) { p++; num++; }
-
 	return num;
 }
 
@@ -1019,8 +1014,8 @@ inline double function(char op, double x)
 double ExpressionObj::Evaluate(int *firstTerm)
 {
 	struct TermStruct term;
-	char   pr, unaryOp = 0;
-	char   opStack[priorityLevels];
+	int    pr, unaryOp = 0;
+	int    opStack[priorityLevels];
 	double val, valStack[priorityLevels + 1];
 	int    j, j0, stackHead = 0;
 
@@ -1030,7 +1025,7 @@ double ExpressionObj::Evaluate(int *firstTerm)
 
 	for (j = j0; j < term_num; j ++) { // *** LOOP OVER TERMS BEGINS HERE ***
 
-		char Type = (term = term_array[j]).type;
+		int Type = (term = term_array[j]).type;
 
 		if ( isUnary(Type) ) {   // Catch unary sign operators here
 			unaryOp = term.type; continue;
@@ -1090,10 +1085,10 @@ int ExpressionObj::eliminate(int kill0, int kill1) {
 
 // *************************************************************************
 
-void ExpressionObj::pushOp(char op, char *opStack, int *indStack0, int *indStack1, int &stackHead, int &j) {
+void ExpressionObj::pushOp(int op, int *opStack, int *indStack0, int *indStack1, int &stackHead, int &j) {
 
-	char pr = ( op == BR_CLOSE ) ? priorityLevels : priority[ op ];
-	char reduce, old, pr_reduce, pr_old;
+	int pr = ( op == BR_CLOSE ) ? priorityLevels : priority[ op ];
+	int reduce, old, pr_reduce, pr_old;
 
 	while ( stackHead )
 		if ( (pr_reduce = priority[ reduce = opStack[stackHead - 1] ]) <= pr ) {
@@ -1185,8 +1180,8 @@ void ExpressionObj::pushOp(char op, char *opStack, int *indStack0, int *indStack
 void ExpressionObj::Optimize(int *firstTerm)
 {
 	struct TermStruct term;
-	char   Type, unaryOp = 0;
-	char   *opStack = new char[term_num];
+	int    Type, unaryOp = 0;
+	int    *opStack   = new int[term_num];
 	int    *indStack0 = new int[term_num+1];
 	int    *indStack1 = new int[term_num+1];
 	int    j, j0, jold = 0, stackHead = 0;
@@ -1304,34 +1299,35 @@ class VarList *VL, long *pLast,
 							term_array[term].type = NUMBER_TYPE; term_array[term].val = 0;  // insert a zero for unary minus
 							term_array[++term].type = tp;
 						}
-						else if ( !isOperand(term_array[term-1].type) ) 
+						else if ( !isOperand(term_array[term-1].type) ) {
 							if ( isFunction(term_array[term-1].type) || 
 								(term_array[term-1].type >= 6 && term_array[term-1].type <= TOP_BINARY) ) { // here's why things like (var < -5) do not work
 									term_array[term].type = NUMBER_TYPE; term_array[term].val = 0;  // insert a zero for unary minus
 									term_array[++term].type = tp;
 							}
 							else term_num = term;
+						}
 					}
 
-					if ( isBinary(tp) )    // catch a binary operator as first token, or two binaries in a row
+					if ( isBinary(tp) )  {  // catch a binary operator as first token, or two binaries in a row
 						if (term == 0)  term_num = term; 
 						else if ( !isOperand(term_array[term-1].type) ) term_num = term;
+					}
+					if ( isUnary(tp) && term > 0 )  // catch a unary operator following an operand
+						if ( isOperand(term_array[term-1].type) ) term_num = term;
 
-						if ( isUnary(tp) && term > 0 )  // catch a unary operator following an operand
-							if ( isOperand(term_array[term-1].type) ) term_num = term;
+					if ( tp == BR_CLOSE ) 
+						if ( --bracket_num < 0 ) term_num = term;  // bracket mismatch
 
-						if ( tp == BR_CLOSE ) 
-							if ( --bracket_num < 0 ) term_num = term;  // bracket mismatch
+					if ( tp == BRACKET ||  isFunction( tp ) ) bracket_num ++;
 
-						if ( tp == BRACKET ||  isFunction( tp ) ) bracket_num ++;
-
-						if ( isFunction( tp ) && term > 0 ) 
-							if ( isOperand( term_array[term-1].type ) ) { // add a multiplication
-								term_array[term + 1].type = tp;
-								term_array[term].type = T_MULT;
-								term ++;
-							}
-							break;
+					if ( isFunction( tp ) && term > 0 ) 
+						if ( isOperand( term_array[term-1].type ) ) { // add a multiplication
+							term_array[term + 1].type = tp;
+							term_array[term].type = T_MULT;
+							term ++;
+						}
+					break;
 				}
 
 				if ( tp >= TYPE_NUM) { // did not match any token
@@ -1405,42 +1401,44 @@ class VarList *VL, long *pLast,
 //****************************************************************************************************
 
 
-void ExpressionObj::buildFormulaString(class VarList *VL, 
-									   double *p1, const char *s1, double *p2, const char *s2, double *p3, const char *s3, const char *message) {
-										   int  term;
-										   char tp;
+void ExpressionObj::buildFormulaString(class VarList *VL, double *p1, const char *s1, double *p2, const char *s2, double *p3, const char *s3, const char *message) 
+{
+	int  term;
+	int  tp;
 
-										   strcpy(formula,"");
+	strcpy(formula,"");
 
-										   for (term = 0; term < term_num; term++) {
-											   if ( strlen(formula) > MAX_FORMULA_LENGTH ) return;
+	for (term = 0; term < term_num; term++) {
+	   if ( strlen(formula) > MAX_FORMULA_LENGTH ) return;
 
-											   tp = term_array[term].type;
-											   if (tp < TYPE_NUM) { 
-												   if ( tp != T_MULT ) strcat(formula, type_id[tp]); else continue; 
-											   }
-											   else if (tp == NUMBER_TYPE) {
-												   if ( term_array[term].val    == 0 && (term + 2) < term_num ) // process a "0 - number" combination,
-													   if ( term_array[term+1].type == T_MINUS ){                   // which is a unary minus
-														   if ( term == 0 ) continue;
-														   else if ( isFunction(term_array[term-1].type) ) continue;
-													   } 
-													   char value[64];
-													   sprintf(value,"%g", term_array[term].val );
-													   strcat(formula, value);
-											   }
-											   else if (tp == POINTER_TYPE) {
-												   char *str;
-												   if      ( term_array[term].ptr == p1 ) str = ::StrCpy(s1);
-												   else if ( term_array[term].ptr == p2 ) str = ::StrCpy(s2); 
-												   else if ( term_array[term].ptr == p3 ) str = ::StrCpy(s3); 
-												   else if (VL) str = ::StrCpy( VL->ResolvePtr( term_array[term].ptr ) );
-												   strcat(formula, str);
-												   delete str;
-											   }
-											   else throw makeMessage("An error in expression \"%s\": bad type=%d",formula,tp);
-											   strcat(formula," ");
-										   }
+	   tp = term_array[term].type;
+	   if (tp < TYPE_NUM) { 
+		   if ( tp != T_MULT ) strcat(formula, type_id[tp]); else continue; 
+	   }
+	   else if (tp == NUMBER_TYPE) {
+		   if ( term_array[term].val    == 0 && (term + 2) < term_num ) // process a "0 - number" combination,
+			   if ( term_array[term+1].type == T_MINUS ){                   // which is a unary minus
+				   if ( term == 0 ) continue;
+				   else if ( isFunction(term_array[term-1].type) ) continue;
+			   } 
+			   char value[64];
+			   sprintf(value,"%g", term_array[term].val );
+			   strcat(formula, value);
+	   }
+	   else if (tp == POINTER_TYPE) {
+		   char *str = NULL;
+		   if      ( term_array[term].ptr == p1 ) str = ::StrCpy(s1);
+		   else if ( term_array[term].ptr == p2 ) str = ::StrCpy(s2); 
+		   else if ( term_array[term].ptr == p3 ) str = ::StrCpy(s3); 
+		   else if (VL) str = ::StrCpy( VL->ResolvePtr( term_array[term].ptr ) );
+		   if (str) {
+				strcat(formula, str);
+				delete str;
+		   }
+	   }
+	   else throw makeMessage("An error in expression \"%s\": bad type=%d",formula,tp);
+	   strcat(formula," ");
+	}
 }
 
 
@@ -1451,7 +1449,7 @@ FILE *fopenAssure(const char *fname, const char *mode, const char *action, const
 	FILE *f;
 	if ( equal(fname, "stderr") )   return (FILE *)stderr;
 	else if ( equal(fname, "stdout") )   return (FILE *)stdout;
-	else if ( f = fopen(fname, mode) )   return f;
+	else if ( (f = fopen(fname, mode)) )   return f;
 	else { perror(">>> fopen Error = ");
 	throw makeMessage("Could not open file \"%s\" for %s %s", fname, action, id); }
 }

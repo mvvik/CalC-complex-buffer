@@ -154,7 +154,7 @@ LoopObj::LoopObj(TokenString &TS, VectorObj *res) : num( TS.token_count(LOOP_TOK
   long pos;
   if (TS.token_count("plot.print", &pos)) TS.line_string(pos + 1, prefix);
 
-  int xmgrGraph, xmgrGraph0 = -1, graphNum, xmgrSets;
+  int xmgrGraph, xmgrGraph0 = -1, graphNum = 0, xmgrSets;
 
   for (i = 0; i < result->size; i++) 
     {

@@ -87,6 +87,7 @@ int VolumeObjClass::inside(int ix, int iy, int iz) {
 		return (isObstacle ^ intermediate) << 6;
 	}
 
+	return 0;
 }
 
 
@@ -257,14 +258,20 @@ RegionObj::RegionObj(TokenString &pars)
 
 	for (int i = 0; i < encl_num; i++) 
 	{
-		if (enclosures[i].xmin >= enclosures[i].xmax) pars.errorMessage(pars.token_index("volume", i + 1) + 1, makeMessage("Check dimensions of volume %d: xmin >= xmax\n", i+1));
-		if (enclosures[i].xmin < XMin) XMin = enclosures[i].xmin;  if (enclosures[i].xmax > XMax) XMax = enclosures[i].xmax; 
+		if (enclosures[i].xmin >= enclosures[i].xmax) 
+			pars.errorMessage(pars.token_index("volume", i + 1) + 1, makeMessage("Check dimensions of volume %d: xmin >= xmax\n", i+1));
+		if (enclosures[i].xmin < XMin) XMin = enclosures[i].xmin;  
+		if (enclosures[i].xmax > XMax) XMax = enclosures[i].xmax; 
 		if (DIMENSIONALITY == 1) continue;
-		if (enclosures[i].ymin >= enclosures[i].ymax) pars.errorMessage(pars.token_index("volume", i + 1) + 3, makeMessage("Check dimensions of volume %d: ymin >= ymax\n", i+1));
-		if (enclosures[i].ymin < YMin) YMin = enclosures[i].ymin;  if (enclosures[i].ymax > YMax) YMax = enclosures[i].ymax; 
+		if (enclosures[i].ymin >= enclosures[i].ymax) 
+			pars.errorMessage(pars.token_index("volume", i + 1) + 3, makeMessage("Check dimensions of volume %d: ymin >= ymax\n", i+1));
+		if (enclosures[i].ymin < YMin) YMin = enclosures[i].ymin;  
+		if (enclosures[i].ymax > YMax) YMax = enclosures[i].ymax; 
 		if (DIMENSIONALITY == 2) continue;
-		if (enclosures[i].zmin >= enclosures[i].zmax) pars.errorMessage(pars.token_index("volume", i + 1) + 5, makeMessage("Check dimensions of volume %d: zmin >= zmax\n", i+1));
-		if (enclosures[i].zmin < ZMin) ZMin = enclosures[i].zmin;  if (enclosures[i].zmax > ZMax) ZMax = enclosures[i].zmax; 
+		if (enclosures[i].zmin >= enclosures[i].zmax) 
+			pars.errorMessage(pars.token_index("volume", i + 1) + 5, makeMessage("Check dimensions of volume %d: zmin >= zmax\n", i+1));
+		if (enclosures[i].zmin < ZMin) ZMin = enclosures[i].zmin;  
+		if (enclosures[i].zmax > ZMax) ZMax = enclosures[i].zmax; 
 	}
 }
 
@@ -353,18 +360,18 @@ int RegionObj::point_type(int ix, int iy, int iz, int fieldObstNum, class Volume
 				}                                 
 		}                                        
 
-		if ( inside == 0 ) return 0;
+	if ( inside == 0 ) return 0;
 
-		int bnd = encl_bnd | obst_bnd;
+	int bnd = encl_bnd | obst_bnd;
 
-		if (bnd == 0) return inside;
-		/*
-		if ( ((bnd & SURF_XMIN) && (bnd & SURF_XMAX)) ||
-		((bnd & SURF_YMIN) && (bnd & SURF_YMAX)) ||
-		((bnd & SURF_ZMIN) && (bnd & SURF_ZMAX)) )
-		throw makeMessage("Ambiguity: two surfaces touch. Please enlarge the obstacle dimensions, extending it beyond the domain boundary, to avoid surface ambiguity");
-		else */  
-		return  _INSIDE_ + (boxid << 7) + bnd;
+	if (bnd == 0) return inside;
+	/*
+	if ( ((bnd & SURF_XMIN) && (bnd & SURF_XMAX)) ||
+	((bnd & SURF_YMIN) && (bnd & SURF_YMAX)) ||
+	((bnd & SURF_ZMIN) && (bnd & SURF_ZMAX)) )
+	throw makeMessage("Ambiguity: two surfaces touch. Please enlarge the obstacle dimensions, extending it beyond the domain boundary, to avoid surface ambiguity");
+	else */  
+	return  _INSIDE_ + (boxid << 7) + bnd;
 
 }
 //***************************************************************

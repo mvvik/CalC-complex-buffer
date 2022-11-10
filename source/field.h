@@ -209,7 +209,8 @@ public:
 	 switch(DIMENSIONALITY) { case 1:  return average1D (V);
 						      case 2:  return average2D (V);
 						      case 3:  return average3D (V);
-						     }
+							  default: return 0.0;
+	 }
   }
 
   double gain()  { 

@@ -439,7 +439,7 @@ class ExpressionObj
   ~ExpressionObj()    { delete [] term_array; }
 
   int    eliminate(int, int);
-  void   pushOp(char op, char *opStack, int *indStack0, int *indStack1, int &stackHead, int &j);
+  void   pushOp(int op, int *opStack, int *indStack0, int *indStack1, int &stackHead, int &j);
   void   Optimize(int * = 0);
   double Evaluate(int * = 0);
   void   print(FILE *f = (FILE *)stderr);

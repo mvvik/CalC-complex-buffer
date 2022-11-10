@@ -89,7 +89,7 @@ public:
   static double UPDATE_ACCURACY;
 
   int   plot_height, win_height, plot_width,  win_width;
-  char  win_title[255];
+  char  win_title[512];
   long  winid;
 
   char     x_label[80];
@@ -133,7 +133,7 @@ protected:
 
   bool   complete;
   double exportTime;
-  char   fileName[255];
+  char   fileName[512];
   class  SimulationObj *Sim;
 
 public:
@@ -165,7 +165,7 @@ protected:
   double *Time;
   double fold;
   double tscale;
-  char   fileName[255];
+  char   fileName[512];
   double x_temp, f_temp;
   long   counter, bufferSize;
   double *Tbuffer, *Ybuffer;
@@ -211,7 +211,7 @@ protected:
 
   bool   complete;
   double exportTime;
-  char   fileName[255];
+  char   fileName[512];
 
 public:
 
@@ -244,7 +244,7 @@ protected:
 
   double timeBetweenSaves;
   double oldTime, newTime;
-  char   fileName[255];
+  char   fileName[512];
 
 public:
 
@@ -334,7 +334,7 @@ class MutePlot1D : public FieldPlot1D
 public:
  
  FILE   *file;
- char   fileName[255];
+ char   fileName[512];
  double total, exportTime;
  double tscale;
  bool   complete;
@@ -394,7 +394,7 @@ public:
 
 	bool   complete;
 	double exportTime;
-	char   fileName[255];
+	char   fileName[512];
 
 	MutePlot2D(FieldObj *f, char islog, const char *dir, double coord, double T,
 		const char *fname = 0, const char *txt = 0) :
@@ -603,7 +603,7 @@ class PlotArray
 
 class RunStatusString {
 
-  int    statusLength, widgetLength, widgetCount;
+  int    widgetLength, widgetCount;
   char   *widgetStr, *wholeStr;
   char   *timeStr, *extraStr;
   double *timePtr, *extraPtr;

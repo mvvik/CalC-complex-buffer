@@ -35,8 +35,15 @@
 D = source
 VPATH = . : $D 
 
-flags = -O
-llibs = -lm
+flags = ${CXXFLAGS}
+llibs = -lm ${LDFLAGS}
+
+#TEMPFLAGS = -O2 
+
+CXXFLAGS = -O2 -g -pipe -Wall -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 \
+-Wp,-D_GLIBCXX_ASSERTIONS -fexceptions -fstack-protector-strong  \
+-grecord-gcc-switches -m64 -mtune=generic -fasynchronous-unwind-tables 
+
 CXX = g++
 
 objects  = syntax.o vector.o table.o peak.o box.o grid.o field.o \

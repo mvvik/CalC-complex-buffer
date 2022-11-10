@@ -232,51 +232,50 @@ InterpolArray::InterpolArray(TokenString &Param, FieldObj *Ca, BufferArray *Bufs
   long p0;
   int i, j;
 
-  if (Ca) interpol_num += Param.token2_count(Ca->ID, "[");
+	if (Ca) interpol_num += Param.token2_count(Ca->ID, "[");
 
-  if (Bufs)
-    for (j = 0; j < Bufs->buf_num; j++)
-        interpol_num += Param.token2_count(Bufs->array[j]->ID, "[");
+	if (Bufs)
+		for (j = 0; j < Bufs->buf_num; j++)
+			interpol_num += Param.token2_count(Bufs->array[j]->ID, "[");
 
-    array = new InterpolObj *[interpol_num];
-    int count = 0;
+	array = new InterpolObj *[interpol_num];
+	int count = 0;
 
-    if (!interpol_num) return; 
+	if (!interpol_num) return; 
 
-    if (VERBOSE) { fprintf(stderr,"\n### Interpolating: \n"); fflush(stderr); }
+	if (VERBOSE) { fprintf(stderr,"\n### Interpolating: \n"); fflush(stderr); }
 
-    if (Ca) 
-      while ( Param.token2_count(Ca->ID, "[") )
-        {
-        p0 = Param.token2_index(Ca->ID, "[", 1);
-        array[count] = new InterpolObj(Param, p0, Ca );
-        count ++;
-        }
-      
+	if (Ca) 
+	  while ( Param.token2_count(Ca->ID, "[") )
+		{
+		p0 = Param.token2_index(Ca->ID, "[", 1);
+		array[count] = new InterpolObj(Param, p0, Ca );
+		count ++;
+		}
 
-    if (Bufs)
-      for (j = 0; j < Bufs->buf_num; j++)
-        while ( Param.token2_count(Bufs->array[j]->ID, "[") )
-          {
-          p0 = Param.token2_index(Bufs->array[j]->ID, "[", 1);
-          array[count] = new InterpolObj(Param, p0, Bufs->array[j] );
-          count ++;
-          }
+	if (Bufs)
+	  for (j = 0; j < Bufs->buf_num; j++)
+		while ( Param.token2_count(Bufs->array[j]->ID, "[") )
+		  {
+		  p0 = Param.token2_index(Bufs->array[j]->ID, "[", 1);
+		  array[count] = new InterpolObj(Param, p0, Bufs->array[j] );
+		  count ++;
+		  }
 
 		if (VERBOSE) fprintf(stderr," ### Compressing interpolation array: ");
 
-    InterpolObj *temp;
+	InterpolObj *temp;
 
-    for (i = 0; i < interpol_num - 1; i++ )
-      for  (j = i + 1; j < interpol_num; j++ )
+	for (i = 0; i < interpol_num - 1; i++ )
+	  for  (j = i + 1; j < interpol_num; j++ )
 	  if ( equal(array[i]->ID, array[j]->ID) )
-	    {
-	    if (VERBOSE) { fprintf(stderr,"."); fflush(stderr); }
-            interpol_num--;
-	    temp = array[interpol_num]; 
-            array[interpol_num] = array[j];
-            array[j] = temp;
-	    }
+		{
+		if (VERBOSE) { fprintf(stderr,"."); fflush(stderr); }
+			interpol_num--;
+		temp = array[interpol_num]; 
+			array[interpol_num] = array[j];
+			array[j] = temp;
+		}
 
     if (VERBOSE) fprintf(stderr," done\n");
 

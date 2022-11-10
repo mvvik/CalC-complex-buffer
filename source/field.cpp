@@ -190,7 +190,7 @@ void FieldObj::getCurrents(TokenString &Params, int simID, class VarList *VL, do
          Currents[si].type = NUMBER_TYPE;
          Currents[si].val  = res; 
        }
-       else if ( ptr = VL->ResolveID(Params[pos + si]) ) {
+       else if ( ( ptr = VL->ResolveID(Params[pos + si]) ) ) {
          Currents[si].type = POINTER_TYPE;
          Currents[si].ptr  = ptr;
        }
@@ -619,7 +619,9 @@ signed long FieldObj::location_to_index(double x, double y, double z, bool error
 		if (errorMsg) throw makeMessage("location (%g, %g, %g) out of bounds", x, y, z);
 		return -1;
 	}
-
+	
+	if (errorMsg) throw makeMessage("Can't parse location (%g, %g, %g)", x, y, z);
+	return -1;
 }
 
 //*****************************************************************************
@@ -921,7 +923,7 @@ double newAverage, volume, source_adjust;
 void FieldObj::init_boundary()    {
 
 	long      i;
-	int       p, bc = 0, boxid;
+	int       p, boxid;
 	int       ix, iy, iz;
 
 	for (i = 0; i < size; i++) ptype[i] =  _INSIDE_;   // default: point inside
@@ -1725,7 +1727,7 @@ signed int FieldObj::getGhost(long ind, double &factor, double &add)
 void FieldObj::nablaX(long i, int ix, long bcvar, double &minus, double &center, double &plus, double &coef)
 {
     int bc;
-    double bdx2, pterm = 0;
+    double bdx2;
     double Di = Diff[i];
     double Dm = 0.5 * (Di + Diff[i - (ix ? 1 : 0)] );
     double Dp = 0.5 * (Di + Diff[i + (ix + 1 < xsize ? 1 : 0)] );
@@ -1762,7 +1764,7 @@ void FieldObj::nablaX(long i, int ix, long bcvar, double &minus, double &center,
 void FieldObj::nablaY(long i, int iy, long bcvar, double &minus, double &center, double &plus, double &coef, double h)
 {
     int bc;
-    double bdx2, pterm = 0;
+    double bdx2;
     double Di = Diff[i];
     double Dm = 0.5 * (Di + Diff[i - (iy > 0 ? xsize : 0)] );
     double Dp = 0.5 * (Di + Diff[i + (iy + 1 < ysize ? xsize : 0)] );
@@ -1800,7 +1802,7 @@ void FieldObj::nablaY(long i, int iy, long bcvar, double &minus, double &center,
 void FieldObj::nablaZ(long i, int iz, long bcvar, double &minus, double &center, double &plus, double &coef, double h)
 {
     int bc;
-    double bdx2, pterm = 0;
+    double bdx2;
     double Di = Diff[i];
     double Dm = 0.5 * (Di + Diff[i - (iz > 0 ? xysize : 0)] );
     double Dp = 0.5 * (Di + Diff[i + (iz + 1 < zsize ? xysize : 0)] );
@@ -1900,22 +1902,23 @@ else
 		  kminus = new ExpressionObj(params, pos, "Bad expression for unbinding rate", 0, 0, &Time, "t");
 		}
 
-		if ( fplus == 0) 
+		if ( fplus == 0) {
 		  if (fKD && fminus) {
 			kplus = new ExpressionObj(1);
 			kplus->term_array[0].type = NUMBER_TYPE;
 			kplus->term_array[0].val  = kminus->Evaluate() / KD;
 		  }
 		  else throw makeMessage("Undefined Ca binding properties for buffer \"%s\"", ID);
-	      
-		if ( fminus == 0) 
+		}
+		if ( fminus == 0) { 
 		  if (fKD && fplus) {
 			kminus = new ExpressionObj(1);
 			kminus->term_array[0].type = NUMBER_TYPE;
 			kminus->term_array[0].val  = kplus->Evaluate() * KD;
 		  }
 		  else throw makeMessage("Undefined Ca binding properties for buffer \"%s\"", ID);
-	      
+		}
+		
 		if ( fplus && fminus && !fKD) KD = kminus->Evaluate() / kplus->Evaluate();
 
 		if ( KD < 0 || kminus->Evaluate() < 0 || kplus->Evaluate() < 0 ||  fabs( kminus->Evaluate() - KD * kplus->Evaluate() ) > 1e-6 ) 
@@ -1978,9 +1981,9 @@ else
 
   void  BufferObj :: setMembraneLayer(double Total, double depth) 
     {
-    long    ii, jj, Incr;
-    int     ix, iy, iz, j, incr;
-    double  *coord, dx;
+    long    ii, jj, Incr = 1;
+    int     ix, iy, iz, j = 0, incr = 1;
+    double  *coord = 0; // dx;
 
     *total = 0.0;
 
@@ -1989,27 +1992,26 @@ else
     for (ii=0 ; ii < Size; ii++) 
      if ( ptype[ii] & SURF_MASK ) { 
 
-       Grid->split(ii, ix, iy, iz);
-       unsigned long point = ptype[ii];
+		   Grid->split(ii, ix, iy, iz);
+		   unsigned long point = ptype[ii];
 
-       if ( point & (SURF_XMAX | SURF_XMIN) ) 
-          { Incr = 1;      dx = xgrid[j = ix]; coord = xcoord; incr = (point & SURF_XMIN) ? 1 : -1; }
-       if ( point & (SURF_YMAX | SURF_YMIN) ) 
-          { Incr = xsize;  dx = ygrid[j = iy]; coord = ycoord; incr = (point & SURF_YMIN) ? 1 : -1; }
-       if ( point & (SURF_ZMAX | SURF_ZMIN) ) 
-          { Incr = xysize; dx = zgrid[j = iz]; coord = zcoord; incr = (point & SURF_ZMIN) ? 1 : -1; }
+		   if ( point & (SURF_XMAX | SURF_XMIN) ) 
+			  { Incr = 1;      j = ix;  coord = xcoord; incr = (point & SURF_XMIN) ? 1 : -1; }  //dx = xgrid[j = ix]; 
+		   if ( point & (SURF_YMAX | SURF_YMIN) ) 
+			  { Incr = xsize;  j = iy;  coord = ycoord; incr = (point & SURF_YMIN) ? 1 : -1; }  //dx = ygrid[j = iy]; 
+		   if ( point & (SURF_ZMAX | SURF_ZMIN) ) 
+			  { Incr = xysize; j = iz;  coord = zcoord; incr = (point & SURF_ZMIN) ? 1 : -1; }  //dx = zgrid[j = iz]; 
 
-       Incr *= incr;
-       jj    = ii;
+		   Incr *= incr;
+		   jj    = ii;
+		   //fprintf(stderr,"ii=%ld (%d,%d,%d) point=%ld Incr=%ld incr=%d dx=%g\n",ii,ix,iy,iz,point,Incr,incr,dx); 
 
-       //fprintf(stderr,"ii=%ld (%d,%d,%d) point=%ld Incr=%ld incr=%d dx=%g\n",ii,ix,iy,iz,point,Incr,incr,dx); 
-
-       double coordinate = coord[j];
-       do {
-         if (ptype[jj] & VARY_MASK )  
-         total->elem[jj] = Total; 
-         jj += Incr; j += incr; 
-       } while ( fabs(coord[j] - coordinate) <= depth && jj < Size );
+		   double coordinate = coord[j];
+		   do {
+			 if (ptype[jj] & VARY_MASK )  
+			 total->elem[jj] = Total; 
+			 jj += Incr; j += incr; 
+		   } while ( fabs(coord[j] - coordinate) <= depth && jj < Size );
    }    
  }
 

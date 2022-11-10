@@ -102,7 +102,7 @@ void Ca3DstepCoop(FieldObj &Ca, VectorObj &CaNew, BufferArray &Buf, BufferArray 
 void header() {
      fprintf(stderr,"\n******************************************************************");
      fprintf(stderr,"\n*                                                                *");
-     fprintf(stderr,"\n*  Calcium Calculator (CalC)  *  version 7.9.5  *  May 20, 2019  *");
+     fprintf(stderr,"\n*  Calcium Calculator (CalC)  *  version 7.9.6  *  Aug 22, 2019  *");
      fprintf(stderr,"\n*                                                                *");
      fprintf(stderr,"\n*                Victor Matveev (C) 2001-2019                    *");
 	 fprintf(stderr,"\n*   CalC is distributed under GPLv3: see attached license file   *");
@@ -166,8 +166,8 @@ void header() {
 
      if ( !TS->token_count("Run") ) {                  //######## CALCULATOR MODE #########
        if (VERBOSE) fprintf(stderr, "***** No simulation runs specified; running in calculator mode *****\n");
-       if ( vary() ) for (int i = 0; i < result.size; i++) 
-	   result[i] = TS->get_double( getTrackVar(*TS, i) );
+       if ( vary() ) 
+		   for (int i = 0; i < result.size; i++)  result[i] = TS->get_double( getTrackVar(*TS, i) );
        TS->printResults(0);
      }        
      else {
@@ -178,9 +178,11 @@ void header() {
        else Simulation = new SimulationObj(*TS);       //#########  FULL PDE MODE  #########
        TS->get_int_param("Number_Of_Iterations_Per_PDE_Step", &Number_Of_Iterations_Per_PDE_Step);
 	   Simulation->Run();                              //#### RUN THE DIFFERENCE SCHEME ####
-       if ( vary() ) for (int i = 0; i < result.size; i++) 
-         if ( (trackPtr = Simulation->ResolveID( vary.trackIDs[i] )) ) result[i] = *trackPtr;
-         else  TS->errorMessage( TS->token_index(vary.trackIDs[i]), 0, "Cannot track an undefined variable" );
+       if ( vary() ) 
+		   for (int i = 0; i < result.size; i++) {
+				if ( (trackPtr = Simulation->ResolveID( vary.trackIDs[i] )) ) result[i] = *trackPtr;
+				else  TS->errorMessage( TS->token_index(vary.trackIDs[i]), 0, "Cannot track an undefined variable" );
+		   }
        TS->printResults(Simulation);
        delete Simulation;
 	 }
@@ -202,8 +204,8 @@ void header() {
 
  if (VERBOSE > 3) {  fprintf(stderr, "\n\n*** Enter any string to exit CalC ***\n"); 
 		     fflush(stderr);
-             char s[100] = "0";
-		     scanf("%s", &s); }
+             char s[256] = "0";
+		     scanf("%s", s); }
 
  return 0;
  }
@@ -530,7 +532,7 @@ void Buf2DstepCoop(BufferArray &Buf, BufferArray &BufNew, VectorObj &Ca, VectorO
 void Ca1DstepCoop(FieldObj &Ca, VectorObj &CaNew, BufferArray &Buf, BufferArray &BufNew, double dt)
 {
 	double    dtHalf = 0.5 * dt;  // NOTE FACTOR OF 1/2 IN ALL FLUXES!
-	double    tStore = Ca.Time;
+	//double    tStore = Ca.Time;
     int       BN = Buf.buf_num;
 	int       NC = Buf.nonCoopNum;   
 	VectorObj LinOld(FieldObj::Size);
@@ -651,6 +653,9 @@ const char *getMethod( CaMethod &CaStep, BufMethod &BufStep) {
  case 3: CaStep = &Ca3DstepCoop; BufStep = &Buf3DstepCoop;       
 	     return  makeMessage("3D (%s,%s,%s) Douglas-Gunn ADI", LABEL_DIM1, LABEL_DIM2, LABEL_DIM3);
 		 break;
+		 
+ default: throw makeMessage("Cannot interpret Dimensionality=%d", DIMENSIONALITY);
+		  return 0;		  
 
  }
  }
@@ -672,9 +677,10 @@ void getRun( TokenString &TS, int i, bool *adaptive, double *time, double *accur
 
   if ( pmax > 0 && !TS.isConst(firstArg) ) { 
     pos++; 
-    if (adaptive)
+    if (adaptive) {
 		if ( equal(firstArg,"adaptive") ) *adaptive = true;
 	    else if ( !equal(firstArg, "nonadaptive") ) TS.errorMessage(pos, 0, "Undefined run method");
+	}
   }
 
   if (time) {
@@ -682,12 +688,12 @@ void getRun( TokenString &TS, int i, bool *adaptive, double *time, double *accur
     if (*time <= 0) TS.errorMessage(pos, makeMessage("Simulation time has to be positive (T = %lf)", *time) );
   } 
 
-  if ( ! isLineEnd(TS[pos + 1]) ) 
+  if ( !isLineEnd(TS[pos + 1]) )  {
 	if (*adaptive) 
 		TS.trail_pars(pos, 'd', accuracy, 'd', dtMax, 'd', dt, 'd', dtStretch, 'd', ODEaccuracy, 'E');
 	else 
 		TS.trail_pars(pos, 'd', dtMax, 'd', accuracy, 'E');
-
+  }
   if (dt) if (*dt <= 0) 
     TS.errorMessage(pos+1, makeMessage("Time step must be positive (dt = %lf)", *dt) );
   if (accuracy) if (*accuracy <= 0 || *accuracy > 1.0) // this argument is actually ODEaccuracy for non-adaptive run

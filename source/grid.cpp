@@ -231,7 +231,7 @@ void GridObj::grid_stretch(const char *dir, double factor, double x1, double x2)
 {
   int       N;
   double    *grid, *coord;
-  double    eps = 1.0e-14, tiny = 1.0e-15, cmin, cmax, sfn, fmax = 2.0;
+  double    eps = 1.0e-14, tiny = 1.0e-15, cmin, cmax, sfn;
 
   if (fabs(factor - 1) < 1e-8 ) return;
 
@@ -240,8 +240,10 @@ void GridObj::grid_stretch(const char *dir, double factor, double x1, double x2)
   else if (::equal(dir, LABEL_DIM3) ) { grid = zgrid; coord = zcoord; N = zsize - 1; cmin = zmin;  cmax = zmax; }
   else throw makeMessage("Invalid grid stretch direction %s", dir);
 
-  if (x1 < cmin) x1 = cmin;  if (x1 > cmax) x1 = cmax;
-  if (x2 < cmin) x2 = cmin;  if (x2 > cmax) x2 = cmax; 
+  if (x1 < cmin) x1 = cmin;  
+  if (x2 < cmin) x2 = cmin;  
+  if (x1 > cmax) x1 = cmax;
+  if (x2 > cmax) x2 = cmax; 
 
   double X1      = x1   - cmin;
   double X2      = cmax - x2;
@@ -271,7 +273,7 @@ void GridObj::grid_stretch(const char *dir, double factor, double x1, double x2)
   double dx0 = X / double(N + 1) + tiny;         // smallest possible dx
   double dx1 = crange / double(N + 1) - tiny;    // largest possible dx
   double y0 = (X / dx0 - N - correct) * logf - log23f + log( (2*X1*f1 / dx0 + f2 )*( 2*X2*f1 / dx0 + f2 ) ); 
-  double y1 = (X / dx1 - N - correct) * logf - log23f + log( (2*X1*f1 / dx1 + f2 )*( 2*X2*f1 / dx1 + f2 ) ); 
+  // double y1 = (X / dx1 - N - correct) * logf - log23f + log( (2*X1*f1 / dx1 + f2 )*( 2*X2*f1 / dx1 + f2 ) ); 
   double dxn, yn;
 
   do     // Bisection begins
@@ -279,7 +281,7 @@ void GridObj::grid_stretch(const char *dir, double factor, double x1, double x2)
     dxn = 0.5 * (dx0 + dx1);
 	yn = (X / dxn - N - correct) * logf - log23f + log( (2*X1*f1 / dxn + f2 )*( 2*X2*f1 / dxn + f2 ) ); 
     if (yn * y0 > 0) { dx0 = dxn; y0 = yn; }
-      else { dx1 = dxn; y1 = yn; }
+                else { dx1 = dxn; } // y1 = yn; }
     }
   while (fabs( (dx0 - dx1) / (dx0 + dx1) ) > eps );
 
@@ -295,9 +297,10 @@ void GridObj::grid_stretch(const char *dir, double factor, double x1, double x2)
      fprintf(stderr, "\n>>> Grid stretch warning: the uniform interval too small to be resolved\n");
 
   double dx = dxn;
-  if ( n2 > n1 )
+  if ( n2 > n1 ) {
 	if ( (X1 / crange < tiny) || (X2 / crange < tiny) ) dx = X / (n2 - n1 + 0.5);
 	                                              else  dx = X / (n2 - n1);
+  }
   for (int i = n1 + 1; i <= n2; i++)  grid[i] = dx; 
 
   double dxlocal;
@@ -328,7 +331,7 @@ void GridObj::grid_stretch(const char *dir, double factor, double x1, double x2)
 
   if ( stretchOrder > 4.0 ) 
 	  if (VERBOSE)
-		  fprintf(stderr, makeMessage("*** Warning: largest to smallest interval ratio spans %.1g orders of magnitude", stretchOrder));
+		  fprintf(stderr, "%s\n", makeMessage("*** Warning: largest to smallest interval ratio spans %.1g orders of magnitude", stretchOrder));
 
   if (VERBOSE) {
     fprintf(stderr,"    Uniform %s-interval = [%.6g, %.6g] (%d..%d)\n", 
@@ -351,7 +354,7 @@ void GridObj::grid_stretch(const char *dir, double factor, double x1, double x2)
 double GridObj::stretchFactorCorrection(double XX, double dx, int NN, double &dxlocal)
 {
 	  double  eps = 1.0e-14, fmax = 2.0;
-	  double  y0, y1, yn;
+	  double  y0, yn;
 	  double  dd = 2 * XX / dx;
 	  double  sf0 = 1.00000001;           // smallest possible stretch factor
 	  double  sf1 = fmax;                 // largest possible stretch factor
@@ -359,14 +362,14 @@ double GridObj::stretchFactorCorrection(double XX, double dx, int NN, double &dx
 	  dxlocal = dx;
 
 	  y0 = exp(NN * log(sf0) ) * (3*sf0 - 1) -  2*sf0 - dd * (sf0 - 1);
-	  y1 = exp(NN * log(sf1) ) * (3*sf1 - 1) -  2*sf1 - dd * (sf1 - 1);
+	  // y1 = exp(NN * log(sf1) ) * (3*sf1 - 1) -  2*sf1 - dd * (sf1 - 1);
 
 	  do     // Bisection begins
 		{
 		sfn = 0.5 * (sf0 + sf1);
 		yn = exp(NN * log(sfn) ) * (3*sfn - 1) -  2*sfn - dd * (sfn - 1);
 		if (yn * y0 > 0) { sf0 = sfn; y0 = yn; }
-		  else { sf1 = sfn; y1 = yn; }
+		  else { sf1 = sfn; } // y1 = yn; }
 		}
 	  while (fabs( (sf0 - sf1) / (sf0 + sf1) ) > eps );
 
@@ -415,7 +418,7 @@ void GridObj::grid_stretch(double factor, int n1, int N, double cmin, double cma
   double stretchOrder = fabs( log(grid[N]/grid[0]) / log(10.0) );
   if ( stretchOrder > 4.0 ) 
 	  if (VERBOSE)
-		  fprintf(stderr, makeMessage("*** Warning: largest to smallest interval ratio spans %.1g orders of magnitude", stretchOrder));
+		  fprintf(stderr, "%s\n", makeMessage("*** Warning: largest to smallest interval ratio spans %.1g orders of magnitude", stretchOrder));
 }
 
 //*****************************************************************************
@@ -641,9 +644,10 @@ void GridObj::initSchemePolar(int dim) {
 			   if (b)   fprintf(stderr, "%g * (u - %g) ", -b, Ca0 );
 			   if (c) { fprintf(stderr, "+ %g * ( u^%.1g / (u^%.1g + %g) - ",  -c, p,      p, k);
 						fprintf(stderr, "%g^%.1g / (%g^%.1g + %g) ) ",        Ca0, p, Ca0, p, k); }
-			   if (!b && !c)
+			   if (!b && !c)  {
 				   if ( !d ) fprintf(stderr, "0 (Neumann, zero flux)");
 				   else fprintf(stderr, "%g (constant flux)", d);
+			   }
 			   fprintf(stderr, "\n");
 			   
 	 }
