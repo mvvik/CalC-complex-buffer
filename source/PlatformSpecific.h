@@ -17,7 +17,7 @@
 //  and make sure the "include" directive and linker options in Makefile 
 //  are correct
 
-#define _NO_GLUT_
+// #define _NO_GLUT_
 
 #ifdef _WIN32
 	#ifndef _NO_GLUT_

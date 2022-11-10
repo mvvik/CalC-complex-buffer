@@ -305,7 +305,7 @@ void SimulationObj::Export(const char *filename)
   FILE *f;
   char endtag[7];
   strcpy(endtag,"endtag");
-  long wrote, toWrite;
+  size_t wrote, toWrite;
 
   if (VERBOSE) 
     fprintf(stderr,"\n#### Dumping all state variables into file %s\n", filename);
@@ -354,7 +354,8 @@ void SimulationObj::Import(const char *filename)
 
   f = fopenAssure(filename, "rb", "Simulation state import", "");
 
-  long n, Size, imported;
+  long n, Size;
+  size_t imported;
   
   if (Ca) {
     Size = Ca->size;

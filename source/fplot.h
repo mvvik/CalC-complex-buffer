@@ -135,8 +135,9 @@ public:
     {
     fptr = ptr; log_plot = islog;
     if (WinTitle) strcpy(win_title, WinTitle); else win_title[0] = 0;
-    x_value  = fmax = fmin = 0.0;
-	log_plot = 0;
+	x_value = 0.0;
+	fmax = fmin = 1.0;
+	log_plot = islog;
     }
 
   virtual ~PlotObj() { };

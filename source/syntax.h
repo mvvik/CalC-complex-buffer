@@ -282,7 +282,7 @@ class TokenString
 
 private:
 
- long length;
+ size_t length;
  char storage[MAX_STORAGE_LENGTH];
  char *token_ptr[MAX_TOKEN_NUM];
  long lineNum[MAX_TOKEN_NUM];

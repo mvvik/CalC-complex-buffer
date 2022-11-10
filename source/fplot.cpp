@@ -443,6 +443,13 @@ GlPointPlot::GlPointPlot(double* ptr, double* tptr, char islog, double tTotal, c
 	tempFlag	= false;
 	lastTime	= tTotal; // +times[0];
 
+	if (islog)
+	{
+		char tempStr[512];
+		sprintf(tempStr, "log %s", win_title);
+		strcpy(win_title, tempStr);
+	}
+
 	buffer = new double[UPDATE_STEPS + 2];  buffer[0] = get_value(0);
 	times  = new double[UPDATE_STEPS + 2];  times[0] = *tptr;
 
@@ -563,8 +570,8 @@ void GlPlotObj::draw_grid(double x0, double x1, double y0, double y1, char lines
 	drawSquare(PlotX0,   PlotY0,   PlotWidth, PlotHeight, BGR_COLOR);
 	drawSquare(PlotXmin, PlotYmin, PlotDX,    PlotDY,     PLOT_BGR_COLOR);
 
-	double x = dx * floor(x0 / dx);  if (x0 > 0) x += dx;
-	double y = dy * floor(y0 / dy);  if (y0 > 0) y += dy;
+	double x = dx * ceil(x0 / dx); 
+	double y = dy * ceil(y0 / dy);
 
 	char s[50];
 	GLint xx, yy;
@@ -842,6 +849,13 @@ void MutePlot1D::draw() {
 GlFieldPlot1D::GlFieldPlot1D(FieldObj* f, char islog, const char* dir, double coord1, double coord2,
 	double total) : FieldPlot1D(f, islog, dir, coord1, coord2), GlPlotObj(1, islog)
 {
+	if (islog)
+	{
+		char tempStr[512];
+		sprintf(tempStr, "log %s", win_title);
+		strcpy(win_title, tempStr);
+	}
+
 	tscale = double(UPDATE_STEPS) / total;
 	redraw();
 }
@@ -989,6 +1003,13 @@ void FieldPlot2D::get_range()
 GlFieldPlot2D::GlFieldPlot2D(FieldObj* f, char islog, const char* dir, double coord, double total)
 	 : FieldPlot2D(f, islog, dir, coord), GlPlotObj(1, islog)
 {
+	if (islog)
+	{
+		char tempStr[512];
+		sprintf(tempStr, "log %s", win_title);
+		strcpy(win_title, tempStr);
+	}
+
 	tscale = double(UPDATE_STEPS) / total;
 	redraw();
 }
@@ -1080,9 +1101,9 @@ double FieldPlotObj::get_value(long ind)
    {
    double v = fptr[ind];
    long   pointType = field->ptype[ind];
-   if ( !(pointType & VARY_MASK ) ) 
-     //     fprintf(stderr,"fmin=%g \n",fmin);
-     v = fmin; 
+
+   if ( !(pointType & VARY_MASK ) ) return fmin; 
+ 
    if (!log_plot) return v;
       else return ( (v <= 0.0) ? 0.0 : log(v)/log(10.0) );
    }
@@ -1151,8 +1172,7 @@ bool   flag = true;
     ind = field_index + j * incr;
     if (field->ptype[ind] & VARY_MASK)  {
       if (flag) {
-        fmin = get_value(field_index);
-        fmax = get_value(field_index); 
+        fmax = fmin = get_value(field_index);
         flag = false;
       }
       else {
@@ -1912,7 +1932,7 @@ int    grid;
 
   void RunStatusString::update(char c)
   {
-    int i;
+    size_t i;
 
 	double newTime = double( clock() / CLOCKS_PER_SEC );
 
@@ -2079,7 +2099,7 @@ int    grid;
 			  POS = params->token_index("plot", i) + 1;
 
 			  params->get_string(POS, ptype);
-			  int pp = strlen(ptype);
+			  size_t pp = strlen(ptype);
 			  if (equal(ptype + pp - 4, ".log")) { log_plot = 1; ptype[pp - 4] = '\0'; }
 			  else if (equal(ptype, "log")) { log_plot = 1; strcpy(ptype, "point"); }
 			  else log_plot = 0;
