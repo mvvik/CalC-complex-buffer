@@ -926,7 +926,7 @@ FieldPlot2D::FieldPlot2D(FieldObj *f, char islog, const char *dir, double coord)
 			FieldObj::Grid->split(field_index, ix, iy, iz);
 			field_index = ix;
 			coord = FieldObj::xcoord[ix];
-			axisLabelX = LABEL_DIM2; axisLabelX = LABEL_DIM3;
+			axisLabelX = LABEL_DIM2; axisLabelY = LABEL_DIM3;
 			sprintf(win_title,"%s[%.3g,%s,%s]", f->ID, coord, LABEL_DIM2, LABEL_DIM3);
   } else 
     if ( equal(dir,LABEL_DIM2) && DIMENSIONALITY == 3 ) {             // x-z plane
