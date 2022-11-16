@@ -121,6 +121,7 @@ public:
 
   static int    UPDATE_STEPS;
   static int    UPDATE_STEPS_1D;
+  static int    UPDATE_STEPS_2D;
   static int    UPDATE_STEPS_BINARY;
   static double UPDATE_ACCURACY;
   
@@ -509,7 +510,7 @@ public:
 	GlFieldPlot1D(FieldObj* f, char islog, const char* dir, double coord1, double coord2, double T);
 
 	void    draw();
-	void    redraw() { x_value = field->Time * (1 - 2 / tscale); draw(); };
+	void    redraw() { x_value = field->Time - 1.1 / tscale; draw(); };
 
 };
 
@@ -533,6 +534,7 @@ public:
  FieldPlot2D(FieldObj *f, char islog, const char *dir, double coord);
 
  virtual void  get_range();
+
 };
 
 //*******************************************************************************
@@ -591,7 +593,8 @@ public:
 	GlFieldPlot2D(FieldObj* f, char islog, const char* dir, double coord, double);
 
 	void    draw();
-	void    redraw();
+	void    redraw() { x_value = field->Time - 1.1 / tscale; draw(); };
+
 	GLubyte get_color(double);
 
 	void    get_range() {

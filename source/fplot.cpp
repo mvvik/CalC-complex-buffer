@@ -55,6 +55,7 @@
 int    XmgrPlot::XMGR_STEPS         = 400;
 int    PlotObj::UPDATE_STEPS        = 600;
 int    PlotObj::UPDATE_STEPS_1D     = 200;
+int    PlotObj::UPDATE_STEPS_2D     = 200;
 int    PlotObj::UPDATE_STEPS_BINARY = 40;
 double PlotObj::UPDATE_ACCURACY     = 0.002; 
 
@@ -389,7 +390,7 @@ void GlPlotObj::makeSubTitle(double fmin, double fmax) {
 	GLint PlotXmin = GlPlotXmin[graph_id];
 	GLint PlotYmin = GlPlotYmin[graph_id];
 
-	format_double(fmin, fmax, 1, 3, format);
+	format_double(fmin, fmax, 1, 4, format);
 	sprintf(formatMin, "min  = %s", format);
 	sprintf(formatMax, "max = %s", format);
 	if (fmin == 0.0) strcpy(minText, "min = 0"); else sprintf(minText, formatMin, fmin);
@@ -856,7 +857,7 @@ GlFieldPlot1D::GlFieldPlot1D(FieldObj* f, char islog, const char* dir, double co
 		strcpy(win_title, tempStr);
 	}
 
-	tscale = double(UPDATE_STEPS) / total;
+	tscale = double(UPDATE_STEPS_1D) / total;
 	redraw();
 }
 
@@ -1010,19 +1011,9 @@ GlFieldPlot2D::GlFieldPlot2D(FieldObj* f, char islog, const char* dir, double co
 		strcpy(win_title, tempStr);
 	}
 
-	tscale = double(UPDATE_STEPS) / total;
+	tscale = double(UPDATE_STEPS_2D) / total;
 	redraw();
 }
-
-//*************************************************************************************
-
-void GlFieldPlot2D::redraw()
-{
-//	draw_grid(coord1[0], coord1[num1 - 1], coord2[0], coord2[num2 - 1], 0);
-	x_value = field->Time * (1 - 2/tscale); // field->Time - 0.000001;
-	draw();
-}
-
 
 //*************************************************************************************
 //                          P L O T  2 D   D R A W
@@ -1716,7 +1707,7 @@ Xmgr2Dplot::Xmgr2Dplot(FieldObj *f, char islog, const char *dir, double coord, d
   
   x_value = -100.0;
   last    = T;
-  steps   = UPDATE_STEPS_1D;
+  steps   = UPDATE_STEPS_2D;
 
   fprintf(file, "@ title \"%s\"\n", win_title);
   fprintf(file, "@ title font 7\n");
@@ -2072,6 +2063,7 @@ int    grid;
 	  params->get_int_param("plot.steps.point",     &PlotObj::UPDATE_STEPS);
 	  params->get_int_param("plot.steps.binary",    &PlotObj::UPDATE_STEPS_BINARY);
 	  params->get_int_param("plot.steps.1D",        &PlotObj::UPDATE_STEPS_1D);
+	  params->get_int_param("plot.steps.2D",        &PlotObj::UPDATE_STEPS_2D);
 	  params->    get_param("plot.update.accuracy", &PlotObj::UPDATE_ACCURACY);
 
 	  strcpy(fileName,"");
