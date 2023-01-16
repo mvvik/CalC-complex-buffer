@@ -27,7 +27,7 @@ You should see a copy of the GNU General Public License in this repository.  If 
 ******************************************************************************
 ### Executables
 
-Executables for the latest versions of **Windows** and **macOS** are contained in the **executables** folder of this repository.  Note that the name of the executable file varies between difference systems (you can rename it as you like, obviously). In this document, executable is referred to by the name **calc**.  If the executable is not working on your OS, follow **compilation** instructions below. Otherwise, proceeed to the **execution** section of this README file.
+Executables for the latest versions of **Windows** and **macOS** are contained in the **executables** folder of this repository.  Note that the name of the executable file varies between different systems (you can rename it as you like, obviously). In this document, executable is referred to by the name **calc**.  If the executable is not working on your OS, follow **compilation** instructions below. Otherwise, proceeed to the **execution** section of this README file.
 
 ******************************************************************************
 ### Compilation
