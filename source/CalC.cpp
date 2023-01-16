@@ -130,13 +130,13 @@ void header() {
 
  try {
 
-	 if (argc < 2) {
-		 FILE* f;
-		 if (f = fopen("DefaultScript.txt", "r")) {
+	 if (argc >1) strcpy(scriptFileName, argv[1]);
+	 else {
+		 FILE* f = fopen("DefaultScript.txt", "r");
+		 if (f) {
 			 fclose(f);
 			 strcpy(scriptFileName, "DefaultScript.txt");
-		 }
-		 else {
+		 } else {
 			 header();
 			 fprintf(stderr, "\n\n Enter the CalC script file name: ");
 			 fflush(stderr);
@@ -150,7 +150,6 @@ void header() {
 			 fprintf(stderr, " File name = %s \n\n", scriptFileName);
 		 }
 	 }
-	 else strcpy(scriptFileName, argv[1]);
 
 	 TokenString* TS;
 	 TS = new TokenString(scriptFileName, EXTRA_PARAM_STRING, "", argc, argv);
