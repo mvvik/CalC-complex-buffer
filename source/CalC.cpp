@@ -70,7 +70,7 @@ char    LABEL_DIM3[4];
 
 PlotArray* GluPlotArray = NULL;
 char*      globalLabelX = NULL;
-char*      versionStr = StrCpy("7.10.4");
+char*      versionStr = StrCpy("7.10.5");
 char       scriptFileName[1024];
 
 #define EXTRA_PARAM_STRING  "; pA=5.182134 ; pi=4 atan(1) ; "
@@ -105,9 +105,9 @@ void Ca3DstepCoop(FieldObj &Ca, VectorObj &CaNew, BufferArray &Buf, BufferArray 
 void header() {
      fprintf(stderr,"\n******************************************************************");
      fprintf(stderr,"\n*                                                                *");
-     fprintf(stderr,"\n*  Calcium Calculator (CalC)  *  version 7.10.4  *  Nov 15, 2022 *");
+     fprintf(stderr,"\n*  Calcium Calculator (CalC)  *  version 7.10.5  *  Jan 15, 2023 *");
      fprintf(stderr,"\n*                                                                *");
-     fprintf(stderr,"\n*                Victor Matveev (C) 2001-2022                    *");
+     fprintf(stderr,"\n*                Victor Matveev (C) 2001-2023                    *");
 	 fprintf(stderr,"\n*   CalC is distributed under GPLv3: see attached license file   *");
      fprintf(stderr,"\n*                                                                *");
 	 fprintf(stderr,"\n*  Dept of Math Sciences, New Jersey Institute of Technology     *");
@@ -131,17 +131,24 @@ void header() {
  try {
 
 	 if (argc < 2) {
-		 header();
-		 fprintf(stderr, "\n\n Enter the CalC script file name: ");
-		 fflush(stderr);
-		 scanf("%s", fname);
-		 size_t i = strlen(argv[0]);
-		 while (argv[0][i] != '/' && argv[0][i] != '\\' && i > 0) i--;
-		 strncpy(scriptFileName, argv[0], i + 1);
-		 scriptFileName[i + 1] = 0;
-		 fprintf(stderr, "\n Full path = %s \n", scriptFileName);
-		 strcat(scriptFileName, fname);
-		 fprintf(stderr, " File name = %s \n\n", scriptFileName);
+		 FILE* f;
+		 if (f = fopen("DefaultScript.txt", "r")) {
+			 fclose(f);
+			 strcpy(scriptFileName, "DefaultScript.txt");
+		 }
+		 else {
+			 header();
+			 fprintf(stderr, "\n\n Enter the CalC script file name: ");
+			 fflush(stderr);
+			 scanf("%s", fname);
+			 size_t i = strlen(argv[0]);
+			 while (argv[0][i] != '/' && argv[0][i] != '\\' && i > 0) i--;
+			 strncpy(scriptFileName, argv[0], i + 1);
+			 scriptFileName[i + 1] = 0;
+			 fprintf(stderr, "\n Full path = %s \n", scriptFileName);
+			 strcat(scriptFileName, fname);
+			 fprintf(stderr, " File name = %s \n\n", scriptFileName);
+		 }
 	 }
 	 else strcpy(scriptFileName, argv[1]);
 
