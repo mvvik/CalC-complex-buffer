@@ -1,5 +1,5 @@
 ******************************************************************************
-# README: Calcium Calculator (CalC)
+## README: Calcium Calculator (CalC)
 - Developed by [Victor Matveev](http://www.victormatveev.org), Department of Mathematical Sciences, NJIT
 - Initial development (2001-2003): Laboratory of Biological Modeling, NIDDK, NIH
 - Email any bug reports (make sure to include your script) to: matveev@njit.edu
@@ -89,7 +89,7 @@ where **calc** is the name of your CalC executable, **scriptfileName** is the na
 A [**homebrew**](https://formulae.brew.sh/formula/grace) installation of xmgrace is quite easy to perform. 
 
 ******************************************************************************
-#####  MATLAB integration:
+###  MATLAB integration:
 
 Like any system program, **CalC** can be launched from **MATLAB** (Mathworks, Inc) simply by executing the command
 
