@@ -5,6 +5,19 @@
 - Email any bug reports (make sure to include your script) to: matveev@njit.edu
 - Mirror maintained at http://www.calciumcalculator.org
 ******************************************************************************
+CalC ("Calcium Calculator") is a modeling tool for simulating intracellular calcium diffusion and buffering. CalC solves continuous reaction-diffusion PDEs describing the entry of calcium into a volume through point-like channels, and its diffusion, buffering and binding to calcium receptors. CalC uses a variation of the Alternating Direction Implicit (ADI) finite difference method, which is quite CPU-time efficient, and accurate to 2nd order in time and space. Time-step is varied adaptively during the simulation.
+- CalC is CPU-time efficient and platform-independent (Windows, OS X, Linux, cygwin, etc.)
+- CalC is operated by a simple script language (with optional flow-control functionality).
+- CalC is easily combined with MATLAB without any special modifications (see below).
+- CalC allows simulations in any geometry: cartesian 3D, 2D or 1D, polar, spherical, cylindrical, conical, etc.
+- CalC allows an arbitrary number of Ca2+ buffers, with a single or two Ca2+ binding sites per molecule
+- CalC scripts can integate ordinary differential equations as well, e.g. to model Ca2+ dependent exocytosis.
+- CalC results can be viewed in real time by piping the output into xmgrace (only on UNIX platforms), or using **freeglut** graphics library
+- CalC is provided on an as-is basis, but I will respond to any bug reports or technical questions.
+
+If you use CalC in your published work, please cite [2002 Biophys J article](https://pubmed.ncbi.nlm.nih.gov/12202362/) article, and please send me a reference for inclusion in the [CalC publication list](https://web.njit.edu/~matveev/calc/calc_pub.html) upon publication.
+******************************************************************************
+#### License
 CalC is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
 CalC is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -14,7 +27,7 @@ You should see a copy of the GNU General Public License in this repository.  If 
 ******************************************************************************
 ### Executables
 
-Executables for **Windows** and **macOS** are contained in the **executables** folder of this repository. Note that the name of the executable file varies between difference systems (you can rename it as you like, obviously). In this document, executable is referred to by the name **calc**.  If the executable is not working on your OS, follow **compilation** instructions below. Otherwise, proceeed to the **execution** section of this README file.
+Executables for the latest versions of **Windows** and **macOS** are contained in the **executables** folder of this repository.  Note that the name of the executable file varies between difference systems (you can rename it as you like, obviously). In this document, executable is referred to by the name **calc**.  If the executable is not working on your OS, follow **compilation** instructions below. Otherwise, proceeed to the **execution** section of this README file.
 
 ******************************************************************************
 ### Compilation
@@ -23,7 +36,7 @@ NOTE: you can find all platform-specific definitions in the short header file ca
 
 ##### 1) Windows:   
 
-Use MSDN Visual Studio to compile the code. The Visual Studio "Project" file **CalC.vcxproj** contains all the necessary dependencies (it resides within the "source" folder). Alternatively, you can install the Linux emulator [cygwin](http://www.cygwin.com") on your Windows machine, and follow the UNIX installation instructions below. 
+Use MSDN Visual Studio to compile the code. The Visual Studio "Project" file **CalC.vcxproj** contains all the necessary dependencies (it resides within the source folder). Alternatively, you can install the Linux emulator [cygwin](http://www.cygwin.com") on your Windows machine, and follow the UNIX installation instructions below. 
 
 ##### 2) macOS
 
