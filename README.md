@@ -5,17 +5,17 @@
 - Email any bug reports (make sure to include your script) to: matveev@njit.edu
 - Mirror maintained at http://www.calciumcalculator.org
 ******************************************************************************
-CalC ("Calcium Calculator") is a modeling tool for simulating intracellular calcium diffusion and buffering. CalC solves continuous reaction-diffusion PDEs describing the entry of calcium into a volume through point-like channels, and its diffusion, buffering and binding to calcium receptors. CalC uses a variation of the Alternating Direction Implicit (ADI) finite difference method, which is quite CPU-time efficient, and accurate to 2nd order in time and space. Time-step is varied adaptively during the simulation.
-- CalC is CPU-time efficient and platform-independent (Windows, OS X, Linux, cygwin, etc.)
+CalC ("Calcium Calculator") is a modeling tool for simulating intracellular calcium diffusion and buffering. CalC solves continuous reaction-diffusion PDEs describing the entry of calcium into a volume through point-like channels, and its diffusion, buffering and binding to calcium receptors. CalC uses a variation of the Alternating Direction Implicit (ADI) finite difference method, which is quite CPU-time efficient, and accurate to 2nd order in time and space. Time-step is varied adaptively during the simulation. Other main features are:
+- CalC is platform-independent (Windows, OS X, Linux, cygwin, etc.)
 - CalC is operated by a simple script language (with optional flow-control functionality).
 - CalC is easily combined with MATLAB without any special modifications (see below).
 - CalC allows simulations in any geometry: cartesian 3D, 2D or 1D, polar, spherical, cylindrical, conical, etc.
-- CalC allows an arbitrary number of Ca2+ buffers, with a single or two Ca2+ binding sites per molecule
-- CalC scripts can integate ordinary differential equations as well, e.g. to model Ca2+ dependent exocytosis.
-- CalC results can be viewed in real time by piping the output into xmgrace (only on UNIX platforms), or using **freeglut** graphics library
-- CalC is provided on an as-is basis, but I will respond to any bug reports or technical questions.
+- CalC allows an arbitrary number of calcium buffers, with a single or two calcium binding sites per molecule
+- CalC scripts can integate ordinary differential equations as well, e.g. to model calcium dependent exocytosis.
+- CalC results can be viewed in real time using **xmgrace** or **freeglut** libraries (see below)
 
-If you use CalC in your published work, please cite [2002 Biophys J article](https://pubmed.ncbi.nlm.nih.gov/12202362/) article, and please send me a reference for inclusion in the [CalC publication list](https://web.njit.edu/~matveev/calc/calc_pub.html) upon publication.
+
+If you use CalC in your published work, please cite [2002 Biophys J article](https://pubmed.ncbi.nlm.nih.gov/12202362/) article, and please send me a reference for inclusion in the [CalC publication list](https://web.njit.edu/~matveev/calc/calc_pub.html) upon publication. CalC is provided on an as-is basis, but I will respond to any bug reports or technical questions.
 ******************************************************************************
 #### License
 CalC is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
@@ -44,9 +44,9 @@ Install XQuartz and Xcode. The latter will have a C++ compiler such as g++, and 
    
 ##### 3) Non-Mac UNIX / LINUX / CygWin
 
-Unless you have freeglut installed, replace **Makefile** with **Makefile.no_glut** (and remove the extension **.no_glut**). Then, run **make**, as usual. This will compile a version of the program without run-time OpenGl/GLUT/FreeGlut graphics.
+Unless you have [freeglut](https://freeglut.sourceforge.net/) installed, replace **Makefile** with **Makefile.no_glut** (and remove the extension **.no_glut**). Then, run **make**, as usual. This will compile a version of the program without run-time OpenGl/GLUT/FreeGlut graphics.
 
-Alternatively, install freeglut and change the linker option in the **Makefile** to properly link your installation of GLUT/FreeGlut library. See also **PlatformSpecific.h** header file in the source directory.
+Alternatively, install [freeglut](https://freeglut.sourceforge.net/) and change the linker option in the **Makefile** to properly link your installation of GLUT/FreeGlut library. See also **PlatformSpecific.h** header file in the source directory.
 
 ******************************************************************************
 ### Execution (all platforms)
