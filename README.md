@@ -5,7 +5,7 @@
 - Email any bug reports (make sure to include your script) to: matveev@njit.edu
 - Mirror maintained at http://www.calciumcalculator.org
 - Manual available at [this URL](https://web.njit.edu/~matveev/calc/manual.html)
-- Script homepage is [here](https://web.njit.edu/~matveev/calc/scripts.html)
+- Demo and other script (in lieau of tutorial) avaialble [here](https://web.njit.edu/~matveev/calc/scripts.html)
 ******************************************************************************
 CalC ("Calcium Calculator") is a modeling tool for simulating intracellular calcium diffusion and buffering. CalC solves continuous reaction-diffusion PDEs describing the entry of calcium into a volume through point-like channels, and its diffusion, buffering and binding to calcium receptors. CalC uses a variation of the Alternating Direction Implicit (ADI) finite difference method, which is quite CPU-time efficient, and accurate to 2nd order in time and space. Time-step is varied adaptively during the simulation. Other main features are:
 - CalC is platform-independent (Windows, OS X, Linux, cygwin, etc.)
@@ -15,7 +15,6 @@ CalC ("Calcium Calculator") is a modeling tool for simulating intracellular calc
 - CalC allows an arbitrary number of calcium buffers, with a single or two calcium binding sites per molecule
 - CalC scripts can integate ordinary differential equations as well, e.g. to model calcium dependent exocytosis.
 - CalC results can be viewed in real time using **xmgrace** or **freeglut** libraries (see below)
-
 
 If you use CalC in your published work, please cite [2002 Biophys J article](https://pubmed.ncbi.nlm.nih.gov/12202362/) article, and please send me a reference for inclusion in the [CalC publication list](https://web.njit.edu/~matveev/calc/calc_pub.html) upon publication. CalC is provided on an as-is basis, but I will respond to any bug reports or technical questions.
 ******************************************************************************
