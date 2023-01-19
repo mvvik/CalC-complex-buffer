@@ -18,7 +18,7 @@ CalC ("Calcium Calculator") is a modeling tool for simulating intracellular calc
 
 If you use CalC in your published work, please cite [2002 Biophys J article](https://pubmed.ncbi.nlm.nih.gov/12202362/) article, and please send me a reference for inclusion in the [CalC publication list](https://web.njit.edu/~matveev/calc/calc_pub.html) upon publication. CalC is provided on an as-is basis, but I will respond to any bug reports or technical questions.
 ******************************************************************************
-#### License
+### License
 CalC is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
 CalC is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
