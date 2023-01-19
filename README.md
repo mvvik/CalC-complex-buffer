@@ -4,6 +4,8 @@
 - Initial development (2001-2003): Laboratory of Biological Modeling, NIDDK, NIH
 - Email any bug reports (make sure to include your script) to: matveev@njit.edu
 - Mirror maintained at http://www.calciumcalculator.org
+- Manual available at [this URL](https://web.njit.edu/~matveev/calc/manual.html)
+- Script homepage is [here](https://web.njit.edu/~matveev/calc/scripts.html)
 ******************************************************************************
 CalC ("Calcium Calculator") is a modeling tool for simulating intracellular calcium diffusion and buffering. CalC solves continuous reaction-diffusion PDEs describing the entry of calcium into a volume through point-like channels, and its diffusion, buffering and binding to calcium receptors. CalC uses a variation of the Alternating Direction Implicit (ADI) finite difference method, which is quite CPU-time efficient, and accurate to 2nd order in time and space. Time-step is varied adaptively during the simulation. Other main features are:
 - CalC is platform-independent (Windows, OS X, Linux, cygwin, etc.)
