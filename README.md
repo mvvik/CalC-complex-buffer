@@ -3,9 +3,10 @@
 - Developed by [Victor Matveev](http://www.victormatveev.org), Department of Mathematical Sciences, NJIT
 - Initial development (2001-2003): Laboratory of Biological Modeling, NIDDK, NIH
 - Email any bug reports (make sure to include your script) to: matveev@njit.edu
-- Mirror maintained at http://www.calciumcalculator.org
 - Manual available at [this URL](https://web.njit.edu/~matveev/calc/manual.html)
 - Demo and other script (in lieu of tutorial) avaialble [here](https://web.njit.edu/~matveev/calc/scripts.html)
+- List of publicatoins that used CalC is maintained at [this URL](https://web.njit.edu/~matveev/calc/calc_pub.html)
+- Mirror maintained at http://www.calciumcalculator.org
 ******************************************************************************
 CalC ("Calcium Calculator") is a modeling tool for simulating intracellular calcium diffusion and buffering. CalC solves continuous reaction-diffusion PDEs describing the entry of calcium into a volume through point-like channels, and its diffusion, buffering and binding to calcium receptors. CalC uses a variation of the Alternating Direction Implicit (ADI) finite difference method, which is quite CPU-time efficient, and accurate to 2nd order in time and space. Time-step is varied adaptively during the simulation. Other main features are:
 - CalC is platform-independent (Windows, OS X, Linux, cygwin, etc.)
@@ -32,8 +33,6 @@ Executables for the latest versions of **Windows** and **macOS** are contained i
 
 ******************************************************************************
 ### Compilation
-
-NOTE: you can find all platform-specific definitions in the short header file called **PlatformSpecific.h**, contained within the source folder.
 
 ##### 1) Windows:   
 
@@ -68,9 +67,9 @@ In order to monitor program output and error messages, include the statement **v
 ### Data Output
 
 ##### File plots (all platforms): 
-Simulation results can be saved to files in real time using [mute plot](http://web.njit.edu/~matveev/calc/manual.html#method_mute) statements, ASCII or binary files are produced that are readable by any graphics-capable language such as MATLAB (Mathworks, Inc). See [demo scripts](https://web.njit.edu/~matveev/calc/scripts.html) and refer to the [manual](http://web.njit.edu/~matveev/calc/manual.html#method_mute) for details.
+Simulation results can be saved to files in real time using [mute plot](http://web.njit.edu/~matveev/calc/manual.html#method_mute) statements, ASCII files are produced that are readable by any graphics-capable language such as MATLAB (Mathworks, Inc). See [demo scripts](https://web.njit.edu/~matveev/calc/scripts.html) and refer to the [manual](http://web.njit.edu/~matveev/calc/manual.html#method_mute) for details.
 
-The [binary](http://web.njit.edu/~matveev/calc/manual.html#binary) plot type allows to save an entire concentration field at several time points during the simulation, and can be read and displayed using MATLAB via scripts provided in the **examples** directory and on the [demo script page](https://web.njit.edu/~matveev/calc/scripts.html)
+The [binary](http://web.njit.edu/~matveev/calc/manual.html#binary) plot type allows to save an entire concentration field at several time points during the simulation, and can be read and displayed using MATLAB via scripts provided in the **examples** directory and on the [demo script page](https://web.njit.edu/~matveev/calc/demoScripts.html)
 
 #####  Real-time OpenGL plots:
 
