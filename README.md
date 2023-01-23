@@ -1,4 +1,3 @@
-******************************************************************************
 ## README: Calcium Calculator (CalC)
 [<img src="https://web.njit.edu/~matveev/images/Demo_Menu_Button.jpg" width="120" height="20" />](https://web.njit.edu/~matveev/calc/demoScripts.html)
 [<img src="https://web.njit.edu/~matveev/images/Scripts_Menu_Button.jpg" width="120" height="20" />](https://web.njit.edu/~matveev/calc/scripts.html)
