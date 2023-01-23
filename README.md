@@ -1,12 +1,13 @@
 ******************************************************************************
 ## README: Calcium Calculator (CalC)
+[<img src="https://web.njit.edu/~matveev/images/Demo_Menu_Button.jpg" width="120" height="20" />](https://web.njit.edu/~matveev/calc/demoScripts.html)
+[<img src="https://web.njit.edu/~matveev/images/Scripts_Menu_Button.jpg" width="120" height="20" />](https://web.njit.edu/~matveev/calc/scripts.html)
+[<img src="https://web.njit.edu/~matveev/images/Manual_Menu_Button.jpg" width="80" height="20" />](https://web.njit.edu/~matveev/calc/manual.html)
+[<img src="https://web.njit.edu/~matveev/images/Pubs_Menu_Button.jpg" width="120" height="20" />](https://web.njit.edu/~matveev/calc/calc_pubs.html)
+[<img src="https://web.njit.edu/~matveev/images/CalC_Menu_Button.jpg" width="100" height="20" />](https://web.njit.edu/~matveev/calc.html)
 - Developed by [Victor Matveev](http://www.victormatveev.org), Department of Mathematical Sciences, NJIT
 - Initial development (2001-2003): Laboratory of Biological Modeling, NIDDK, NIH
 - Email any bug reports (make sure to include your script) to: matveev@njit.edu
-- Manual available at [this URL](https://web.njit.edu/~matveev/calc/manual.html)
-- Demo and other script (in lieu of tutorial) avaialble [here](https://web.njit.edu/~matveev/calc/scripts.html)
-- List of publicatoins that used CalC is maintained at [this URL](https://web.njit.edu/~matveev/calc/calc_pub.html)
-- Mirror maintained at http://www.calciumcalculator.org
 ******************************************************************************
 CalC ("Calcium Calculator") is a modeling tool for simulating intracellular calcium diffusion and buffering. CalC solves continuous reaction-diffusion PDEs describing the entry of calcium into a volume through point-like channels, and its diffusion, buffering and binding to calcium receptors. CalC uses a variation of the Alternating Direction Implicit (ADI) finite difference method, which is quite CPU-time efficient, and accurate to 2nd order in time and space. Time-step is varied adaptively during the simulation. Other main features are:
 - CalC is platform-independent (Windows, OS X, Linux, cygwin, etc.)
