@@ -210,11 +210,11 @@ InterpolObj::InterpolObj(TokenString &Param, long p0, FieldObj *FO)
           fflush(stderr); }
 
    switch ( DIMENSIONALITY ) { 
-		   case 1:  sprintf(xyz,"%s[%g]", FO->ID, x); 
+		   case 1:  snprintf(xyz, 127, "%s[%g]", FO->ID, x); 
 					break;
-		   case 2:  sprintf(xyz,"%s[%g,%g]", FO->ID, x, y); 
+		   case 2:  snprintf(xyz, 127, "%s[%g,%g]", FO->ID, x, y);
 					break;
-		   default: sprintf(xyz,"%s[%g,%g,%g]", FO->ID, x, y, z);
+		   default: snprintf(xyz, 127, "%s[%g,%g,%g]", FO->ID, x, y, z);
 		   }
 
    ID = StrCpy( xyz );
@@ -264,7 +264,7 @@ InterpolArray::InterpolArray(TokenString &Param, FieldObj *Ca, BufferArray *Bufs
 		  count ++;
 		  }
 
-		if (VERBOSE) fprintf(stderr," ### Compressing interpolation array: ");
+	if (VERBOSE) fprintf(stderr," ### Compressing interpolation array: ");
 
 	InterpolObj *temp;
 

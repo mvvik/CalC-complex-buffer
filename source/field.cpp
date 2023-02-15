@@ -135,7 +135,7 @@ void FieldObj::kill_tridiag()
 void FieldObj::tridiag(int n)
 {
 int    i;
-register double sb, sp, dg, rt;
+double sb, sp, dg, rt;
 
 sp = ( sup[1]   /= (dg = diag[1]) );
 rt = ( right[1] /= dg );

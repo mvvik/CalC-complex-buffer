@@ -325,7 +325,7 @@ void SimulationObj::Export(const char *filename)
 	for (int i=0; i< Buffers->buf_num; i++) {
       toWrite = Buffers->array[i]->size;
       wrote = fwrite( (void *)(Buffers->array[i]->elem), sizeof(double), toWrite, f);
-  	  if ( wrote != Buffers->array[i]->size ) 
+  	  if ( wrote != size_t( Buffers->array[i]->size ) ) 
  	    throw makeMessage("Failure to export %s profile to file %s: wrote only %ld of total %ld elements",
 	                      Buffers->array[i]->ID, filename, wrote, toWrite);
 	}
@@ -363,7 +363,7 @@ void SimulationObj::Import(const char *filename)
     if (n != Size) 
       throw makeMessage("Can't import the concentration fields: wrong number of elements (%ld vs %ld)\n", n, Size);
 	imported = fread( (void *)(Ca->elem), sizeof(double), Size, f );
-	if ( imported != Size ) 
+	if ( imported != size_t( Size ) ) 
 		throw makeMessage("Failure to import Ca profile from file %s: read only %ld of the total %ld elements",
 		                   filename, imported, Size);
   }
@@ -372,7 +372,7 @@ void SimulationObj::Import(const char *filename)
     for (int i=0; i< Buffers->buf_num; i++) {
 	  Size = Ca->size;
       imported = fread( (void *)(Buffers->array[i]->elem), sizeof(double), Size, f);
-  	  if ( imported != Size ) 
+  	  if ( imported != size_t( Size ) )
 	 	 throw makeMessage("Failure to import %s profile from file %s: read only %ld of the total %ld elements",
 		                   Buffers->array[i]->ID, filename, imported, Size);
     }

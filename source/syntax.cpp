@@ -111,7 +111,7 @@ void TokenString::errorMessage(long p, char *message1, const char *message2) {
 	char message[1024];
 	char *lineInfo = linePrint(p);
 
-	sprintf(message, "\n\n*** Error on line %ld of script \"%s\":\n", 
+	snprintf(message, 1023, "\n\n*** Error on line %ld of script \"%s\":\n", 
 		lineNum[p] >> SCRIPT_ID_BITS, scriptFileNames[ lineNum[p] & MAX_SCRIPT_FILES ]);
 	if ( message1 ) { strcat(message, "    "); strcat(message, message1); strcat(message,"\n");
 	delete [] message1; }
@@ -301,7 +301,7 @@ void TokenString::parse(const char *fname, const char *extra1, const char *extra
 				else if ( ::equal(token,"include") ) {  //*** Import data file
 					if ( (ptr0 = ptr1) >= last ) break;
 					getToken(ptr0,ptr1,last, exprFlag);
-					char *input_file = ::StrCpy(ptr0,ptr1-ptr0);
+					char *input_file = ::StrCpy(ptr0, ptr1-ptr0);
 					char *filename = get_string(input_file);
 					parse(filename, 0, 0, argc, argv);
 					delete [] input_file; delete [] filename;
@@ -320,7 +320,7 @@ void TokenString::parse(const char *fname, const char *extra1, const char *extra
 				}
 
 				if (token[0] == '$') {
-					if (token[1] == '$') sprintf(token,"%d",argc);  //*** Get number of command-line arguments
+					if (token[1] == '$') snprintf(token, 511, "%d",argc);  //*** Get number of command-line arguments
 					else    
 					{                //*** Get a command-line argument
 						double farg;
@@ -426,7 +426,7 @@ void TokenString::addToken(const char *token, int line, int script)
 		throw("******** Script is too long: increase MAX_TOKEN_NUM in file \"source/syntax.h\"");
 
 	lineNum[token_num] = (line << SCRIPT_ID_BITS) + script;
-	strncpy( token_ptr[token_num], token, tlength );
+	strncpy( token_ptr[token_num], token, tlength + 1 );
 	*(token_ptr[token_num] + tlength) = 0;
 
 	if (VERBOSE > 6) fprintf(stderr, "%s ", token_ptr[token_num]);
@@ -601,18 +601,25 @@ int TokenString::trail_pars(long ind0, va_list p)
 		switch (type)
 		{
 		case 'd': dpar =  va_arg(p, double *);
-			if (dpar) *dpar = get_double(ind); break;
+			if (dpar) *dpar = get_double(ind); 
+			break;
 		case 'i': ipar =  va_arg(p, int *);   
-			if (ipar) *ipar = get_int(ind); break;
+			if (ipar) *ipar = get_int(ind); 
+			break;
 		case 'l': lpar =  va_arg(p, long *);
-			if (lpar) *lpar = get_long(ind); break;
-		case 'c': cpar =  va_arg(p, char *); if (cpar) *cpar = *token_ptr[ind];
+			if (lpar) *lpar = get_long(ind); 
 			break;
-		case 's': spar =  va_arg(p, char *); if (spar) get_string(ind,spar);
+		case 'c': cpar =  va_arg(p, char *); 
+		    if (cpar) *cpar = *token_ptr[ind];
 			break;
-		case 'S': spar =  va_arg(p, char *); if (spar) strcpy(spar,token_ptr[ind]);
+		case 's': spar =  va_arg(p, char *); 
+		    if (spar) get_string(ind,spar);
 			break;
-		default:  va_arg(p, int); break;  // ignore argument 
+		case 'S': spar =  va_arg(p, char *); 
+		    if (spar) strcpy(spar,token_ptr[ind]);
+			break;
+		default:  va_arg(p, int); 
+		          break;  // ignore argument 
 		}
 	}
 	va_end(p);
@@ -898,7 +905,7 @@ char *TokenString::line_string(long p, char *sout, VarList *VL )
 		if (pp >= p) {
 			char temp[40];
 			p = pp + 1;
-			sprintf(temp,"%.12g",x);
+			snprintf(temp, 39, "%.12g", x);
 			strcat(sout,temp);
 		}
 		else {
@@ -1174,7 +1181,7 @@ void ExpressionObj::pushOp(int op, int *opStack, int *indStack0, int *indStack1,
 		}
 		else break;  // end if priority[ reduce = opStack[stackHead - 1] ] <= pr
 
-		opStack[ stackHead++ ] = op;
+	opStack[ stackHead++ ] = op;
 }
 
 //**************************************************************************
@@ -1332,33 +1339,33 @@ class VarList *VL, long *pLast,
 					break;
 				}
 
-				if ( tp >= TYPE_NUM) { // did not match any token
+			if ( tp >= TYPE_NUM) { // did not match any token
 
-					if (Param.isConst( Param[p], &(term_array[term].val)) ) {  // it's a number
-						if (VERBOSE > 6)  fprintf(stderr,"it's a number = %g\n", term_array[term].val );
-						term_array[term].type = NUMBER_TYPE;
-					}
-					else if ( equal(Param[p], arg1id) ) { term_array[term].ptr = arg1; term_array[term].type = POINTER_TYPE; }
-					else if ( equal(Param[p], arg2id) ) { term_array[term].ptr = arg2; term_array[term].type = POINTER_TYPE; }
-					else if ( equal(Param[p], arg3id) ) { term_array[term].ptr = arg3; term_array[term].type = POINTER_TYPE; }
-					else if ( VL ) 
-						if (( term_array[term].ptr = VL->ResolveID( Param[p] ) )) {  // it's a pointer // memory leak!!
-							if (VERBOSE > 6)  fprintf(stderr,"it's a pointer = %p\n", &term_array[term].ptr);
-							term_array[term].type = POINTER_TYPE;
-						}
-						else  term_num = term;  // does not match anything
-					else term_num = term;  // there's no VarList argument
-
-					if ( term > 0 ) if ( isOperand( term_array[term-1].type ) ) { // add a multiplication
-						term_array[term + 1] = term_array[term];
-						term_array[term].type = T_MULT;
-						term ++;
-					}
+				if (Param.isConst( Param[p], &(term_array[term].val)) ) {  // it's a number
+					if (VERBOSE > 6)  fprintf(stderr,"it's a number = %g\n", term_array[term].val );
+					term_array[term].type = NUMBER_TYPE;
 				}
+				else if ( equal(Param[p], arg1id) ) { term_array[term].ptr = arg1; term_array[term].type = POINTER_TYPE; }
+				else if ( equal(Param[p], arg2id) ) { term_array[term].ptr = arg2; term_array[term].type = POINTER_TYPE; }
+				else if ( equal(Param[p], arg3id) ) { term_array[term].ptr = arg3; term_array[term].type = POINTER_TYPE; }
+				else if ( VL ) 
+					if (( term_array[term].ptr = VL->ResolveID( Param[p] ) )) {  // it's a pointer // memory leak!!
+						if (VERBOSE > 6)  fprintf(stderr,"it's a pointer = %p\n", &term_array[term].ptr);
+						term_array[term].type = POINTER_TYPE;
+					}
+					else  term_num = term;  // does not match anything
+				else term_num = term;  // there's no VarList argument
 
-				if (term_num <= term) break;
-				p++; term++;
-				if ( p >= Param.token_num ) { term_num = term - 1; break; }
+				if ( term > 0 ) if ( isOperand( term_array[term-1].type ) ) { // add a multiplication
+					term_array[term + 1] = term_array[term];
+					term_array[term].type = T_MULT;
+					term ++;
+				}
+			}
+
+			if (term_num <= term) break;
+			p++; term++;
+			if ( p >= Param.token_num ) { term_num = term - 1; break; }
 
 		}  // ******************************   Main expression loop 
 
@@ -1418,14 +1425,14 @@ void ExpressionObj::buildFormulaString(class VarList *VL, double *p1, const char
 		   if ( tp != T_MULT ) strcat(formula, type_id[tp]); else continue; 
 	   }
 	   else if (tp == NUMBER_TYPE) {
-		   if ( term_array[term].val    == 0 && (term + 2) < term_num ) // process a "0 - number" combination,
+			if ( term_array[term].val == 0 && (term + 2) < term_num ) // process a "0 - number" combination,
 			   if ( term_array[term+1].type == T_MINUS ){                   // which is a unary minus
 				   if ( term == 0 ) continue;
 				   else if ( isFunction(term_array[term-1].type) ) continue;
 			   } 
-			   char value[64];
-			   sprintf(value,"%g", term_array[term].val );
-			   strcat(formula, value);
+			char value[64];
+			snprintf(value, 63, "%g", term_array[term].val );
+			strcat(formula, value);
 	   }
 	   else if (tp == POINTER_TYPE) {
 		   char *str = NULL;
@@ -1449,7 +1456,7 @@ void ExpressionObj::buildFormulaString(class VarList *VL, double *p1, const char
 
 FILE *fopenAssure(const char *fname, const char *mode, const char *action, const char *id) {
 	FILE *f;
-	if ( equal(fname, "stderr") )   return (FILE *)stderr;
+	     if ( equal(fname, "stderr") )   return (FILE *)stderr;
 	else if ( equal(fname, "stdout") )   return (FILE *)stdout;
 	else if ( (f = fopen(fname, mode)) )   return f;
 	else { perror(">>> fopen Error = ");

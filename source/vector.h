@@ -38,7 +38,7 @@ class VectorObj {
  public:
 
   double *elem;
-  long size;
+  long   size;
 
   VectorObj(long n = 0)  { elem = new double[size = n]; };
 

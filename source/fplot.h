@@ -348,7 +348,7 @@ public:
  FieldDump(FieldObj *f, double t, const char *fname = "", const char *WinTitle = "") : FieldPlotObj(f, 0, WinTitle)
     {
     strcpy(fileName, fname);
-	sprintf(win_title, "%s (dump into %s at time %g)", f->ID, fileName, t);
+	snprintf(win_title, 511, "%s (dump into %s at time %g)", f->ID, fileName, t);
     exportTime = t;
     complete = false;
     }
@@ -381,7 +381,7 @@ public:
  FieldDumpT(FieldObj *f, double total, const char *fname = 0, const char *WinTitle = 0) : FieldPlotObj(f, 0, WinTitle)
     {
 		strcpy(fileName, fname);
-		sprintf(win_title, "%s (binary plot into file %s)", field->ID, fileName);
+		snprintf(win_title, 511, "%s (binary plot into file %s)", field->ID, fileName);
 		timeBetweenSaves = total / double(UPDATE_STEPS_BINARY);
 		oldTime  = field->Time;
 		newTime  = oldTime + timeBetweenSaves;

@@ -345,9 +345,9 @@ void GlPlotObj::makeTitle(char* winTitle, double t0, double t1) {
 	char     Title[200];
 
 	format_double(t0, t1, 1, 2, format);
-	sprintf(xText, format, t1);
+	snprintf(xText, 99, format, t1);
 
-	sprintf(Title, "%s (%s=%s)", winTitle, globalLabelX, xText);
+	snprintf(Title, 199, "%s (%s=%s)", winTitle, globalLabelX, xText);
 
 	GLint PlotXmin = GlPlotXmin[graph_id];
 	GLint PlotYmin = GlPlotYmin[graph_id], PlotDY = GlPlotDY[graph_id];
@@ -366,12 +366,12 @@ void GlPlotObj::makeTitle(char* winTitle, double t0, double t1, double f0, doubl
 	char     Title[200];
 
 	format_double(t0, t1, 1, 1, format);
-	sprintf(xText, format, t1);
+	snprintf(xText, 99, format, t1);
 
 	format_double(f0, f1, 1, 1, format);
-	sprintf(fText, format, f1);
+	snprintf(fText, 99, format, f1);
 
-	sprintf(Title, "%s=%s  (%s=%s)", winTitle, fText, globalLabelX, xText);
+	snprintf(Title, 199, "%s=%s  (%s=%s)", winTitle, fText, globalLabelX, xText);
 
 	GLint PlotXmin = GlPlotXmin[graph_id];
 	GLint PlotYmin = GlPlotYmin[graph_id], PlotDY = GlPlotDY[graph_id];
@@ -391,10 +391,10 @@ void GlPlotObj::makeSubTitle(double fmin, double fmax) {
 	GLint PlotYmin = GlPlotYmin[graph_id];
 
 	format_double(fmin, fmax, 1, 4, format);
-	sprintf(formatMin, "min  = %s", format);
-	sprintf(formatMax, "max = %s", format);
-	if (fmin == 0.0) strcpy(minText, "min = 0"); else sprintf(minText, formatMin, fmin);
-	if (fmax == 0.0) strcpy(maxText, "max = 0"); else sprintf(maxText, formatMax, fmax);
+	snprintf(formatMin, 79, "min  = %s", format);
+	snprintf(formatMax, 79, "max = %s", format);
+	if (fmin == 0.0) strcpy(minText, "min = 0"); else snprintf(minText, 99, formatMin, fmin);
+	if (fmax == 0.0) strcpy(maxText, "max = 0"); else snprintf(maxText, 99, formatMax, fmax);
 
 	GLint xchar  = PlotXmin;                  // Plot x-Label
 	GLint ychar1 = PlotYmin - 28;
@@ -447,7 +447,7 @@ GlPointPlot::GlPointPlot(double* ptr, double* tptr, char islog, double tTotal, c
 	if (islog)
 	{
 		char tempStr[512];
-		sprintf(tempStr, "log %s", win_title);
+		snprintf(tempStr, 511, "log %s", win_title);
 		strcpy(win_title, tempStr);
 	}
 
@@ -594,7 +594,7 @@ void GlPlotObj::draw_grid(double x0, double x1, double y0, double y1, char lines
 			glVertex2i(xx + PlotXmin, PlotYmin + PlotDY);
 			glEnd();
 		}
-		sprintf(s, xformat, x);
+		snprintf(s, 49, xformat, x);
 		int xchar = PlotXmin + xx - 2;
 		int ychar = PlotYmin - 12;
 		plotString(xchar, ychar, TEXT_COLOR, GLUT_BITMAP_HELVETICA_10, s);
@@ -613,7 +613,7 @@ void GlPlotObj::draw_grid(double x0, double x1, double y0, double y1, char lines
 			glVertex2i(PlotXmin + PlotDX, PlotYmin + yy);
 			glEnd();
 		}
-		sprintf(s, yformat, y);
+		snprintf(s, 49, yformat, y);
 		int xchar = PlotXmin + PlotDX + 7;
 		int ychar = PlotYmin + yy - 2;
 		plotString(xchar, ychar, TEXT_COLOR, GLUT_BITMAP_HELVETICA_10, s);
@@ -735,8 +735,11 @@ void  FieldDumpT::draw()  {
 		 if (VERBOSE > 5) fprintf(stderr, " >> Instability recovery: back step in FieldDump %s, time: %g ==> %g\n", fileName, oldTime, field->Time);
 		 oldTime = field->Time;
 		 
+		 long seed = long(time(NULL) + oldTime*10000 + newTime * 10000);
+		 srand(seed);
+
 		 char tempFileName[512];     
-	     sprintf(tempFileName, "plotTempBinFile%ld", long(rand()*1000000000) );
+	     snprintf(tempFileName, 511, "plotTempBinFile%ld", long(rand()*1000000000) );
 
 		 double tempTime;
 		 double *buffer;
@@ -853,7 +856,7 @@ GlFieldPlot1D::GlFieldPlot1D(FieldObj* f, char islog, const char* dir, double co
 	if (islog)
 	{
 		char tempStr[512];
-		sprintf(tempStr, "log %s", win_title);
+		snprintf(tempStr, 511, "log %s", win_title);
 		strcpy(win_title, tempStr);
 	}
 
@@ -928,7 +931,7 @@ FieldPlot2D::FieldPlot2D(FieldObj *f, char islog, const char *dir, double coord)
 			field_index = ix;
 			coord = FieldObj::xcoord[ix];
 			axisLabelX = LABEL_DIM2; axisLabelY = LABEL_DIM3;
-			sprintf(win_title,"%s[%.3g,%s,%s]", f->ID, coord, LABEL_DIM2, LABEL_DIM3);
+			snprintf(win_title, 511, "%s[%.3g,%s,%s]", f->ID, coord, LABEL_DIM2, LABEL_DIM3);
   } else 
     if ( equal(dir,LABEL_DIM2) && DIMENSIONALITY == 3 ) {             // x-z plane
             grid1  = FieldObj::xgrid;   grid2  = FieldObj::zgrid;
@@ -944,7 +947,7 @@ FieldPlot2D::FieldPlot2D(FieldObj *f, char islog, const char *dir, double coord)
 			field_index = iy * FieldObj::xsize;
 			coord = FieldObj::ycoord[iy];
 			axisLabelX = LABEL_DIM1; axisLabelY = LABEL_DIM3;
-            sprintf(win_title,"%s[%s,%.3g,%s]", f->ID, LABEL_DIM1, coord, LABEL_DIM3);
+			snprintf(win_title, 511, "%s[%s,%.3g,%s]", f->ID, LABEL_DIM1, coord, LABEL_DIM3);
     } else                                                            // x-y plane
   if  ( (equal(dir,LABEL_DIM3) && DIMENSIONALITY > 1) || DIMENSIONALITY == 2 ) {
             grid1  = FieldObj::xgrid;  grid2  = FieldObj::ygrid;
@@ -961,8 +964,8 @@ FieldPlot2D::FieldPlot2D(FieldObj *f, char islog, const char *dir, double coord)
 			coord = FieldObj::zcoord[iz];
 			axisLabelX = LABEL_DIM1; axisLabelY = LABEL_DIM2;
 
-			if (DIMENSIONALITY == 2) sprintf(win_title,"%s[%s,%s]",      f->ID, LABEL_DIM1, LABEL_DIM2);
-	                            else sprintf(win_title,"%s[%s,%s,%.3g]", f->ID, LABEL_DIM1, LABEL_DIM2, coord);
+			if (DIMENSIONALITY == 2) snprintf(win_title, 511, "%s[%s,%s]",      f->ID, LABEL_DIM1, LABEL_DIM2);
+	                            else snprintf(win_title, 511, "%s[%s,%s,%.3g]", f->ID, LABEL_DIM1, LABEL_DIM2, coord);
   }
   else throw makeMessage("Cannot interpret direction \"%s\" in 2D plot",dir);
 }
@@ -1007,7 +1010,7 @@ GlFieldPlot2D::GlFieldPlot2D(FieldObj* f, char islog, const char* dir, double co
 	if (islog)
 	{
 		char tempStr[512];
-		sprintf(tempStr, "log %s", win_title);
+		snprintf(tempStr, 511, "log %s", win_title);
 		strcpy(win_title, tempStr);
 	}
 
@@ -1065,7 +1068,6 @@ void GlFieldPlot2D::draw()
 		}
 		y = yy;
 	}
-
 	glFlush();
 }
 
@@ -1117,9 +1119,9 @@ FieldPlot1D::FieldPlot1D(FieldObj *f, char islog, const char *dir, double coord1
 			coord1 = FieldObj::ycoord[iy];
             coord2 = FieldObj::zcoord[iz];
 			axisLabel = LABEL_DIM1;
-	    if (DIMENSIONALITY == 1) sprintf(win_title,"%s[%s]", f->ID, LABEL_DIM1);
-	    else if (DIMENSIONALITY == 2) sprintf(win_title,"%s[%s,%.3g]", f->ID, LABEL_DIM1, coord1);
-	    else sprintf(win_title,"%s[%s,%.3g,%.3g]", f->ID, LABEL_DIM1, coord1, coord2);
+	    if (DIMENSIONALITY == 1) snprintf(win_title, 511, "%s[%s]", f->ID, LABEL_DIM1);
+	    else if (DIMENSIONALITY == 2) snprintf(win_title, 511, "%s[%s,%.3g]", f->ID, LABEL_DIM1, coord1);
+	    else snprintf(win_title, 511, "%s[%s,%.3g,%.3g]", f->ID, LABEL_DIM1, coord1, coord2);
  } else
    if ( equal(dir, LABEL_DIM2) ) {
             grid = FieldObj::ygrid; coord = FieldObj::ycoord;
@@ -1132,8 +1134,8 @@ FieldPlot1D::FieldPlot1D(FieldObj *f, char islog, const char *dir, double coord1
 			coord1 = FieldObj::xcoord[ix];
             coord2 = FieldObj::zcoord[iz];
 			axisLabel = LABEL_DIM2;
-	    if (DIMENSIONALITY == 2) sprintf(win_title,"%s[%.3g,%s]", f->ID, coord1, LABEL_DIM2);
-	    else sprintf(win_title,"%s[%.3g,%s,%.3g]", f->ID, coord1, LABEL_DIM2, coord2);
+	    if (DIMENSIONALITY == 2) snprintf(win_title, 511, "%s[%.3g,%s]", f->ID, coord1, LABEL_DIM2);
+	    else snprintf(win_title, 511, "%s[%.3g,%s,%.3g]", f->ID, coord1, LABEL_DIM2, coord2);
  } else 
   if  ( equal(dir, LABEL_DIM3) ) {
             grid = FieldObj::zgrid;  coord = FieldObj::zcoord;
@@ -1146,7 +1148,7 @@ FieldPlot1D::FieldPlot1D(FieldObj *f, char islog, const char *dir, double coord1
 			coord1 = FieldObj::xcoord[ix];
             coord2 = FieldObj::ycoord[iy];
 			axisLabel = LABEL_DIM3;
-	    sprintf(win_title,"%s[%.3g,%.3g,%s]", f->ID, coord1, coord2, LABEL_DIM3);
+			snprintf(win_title, 511, "%s[%.3g,%.3g,%s]", f->ID, coord1, coord2, LABEL_DIM3);
   }
   else throw makeMessage("Cannot interpret direction \"%s\" in 1D plot", dir);
 }
@@ -1435,8 +1437,8 @@ void XmgrPointPlot::get_range()
       char str[50];
       double gx = format_double(first, last, XMGR_DIVISIONS, 2, format);
 
-      sprintf(str, format, first);  fprintf(file, "@ world xmin %s\n", str);
-      sprintf(str, format, last);   fprintf(file, "@ world xmax %s\n", str);
+      snprintf(str, 49, format, first);  fprintf(file, "@ world xmin %s\n", str);
+      snprintf(str, 49, format, last);   fprintf(file, "@ world xmax %s\n", str);
       fprintf(file, "@ xaxis tick major %g\n", gx);
       fprintf(file, "@ xaxis tick minor %g\n", gx/2.0);
       fprintf(file, "@ xaxis ticklabel char size %g\n", 0.9 + 0.1 * (1 - divs));
@@ -1511,18 +1513,18 @@ void  XmgrPointPlot::draw()
        format_double(Time-xDelta, Time, 1, 2, format);
        format_double(fmin, fmax, 1, 4, mmform);
 
-       if (fmin == 0.0) strcpy(mintxt,"0"); else sprintf(mintxt, mmform, fmin);
-       if (fmax == 0.0) strcpy(maxtxt,"0"); else sprintf(maxtxt, mmform, fmax);
-       sprintf(xtxt, format,  Time);
-       sprintf(ytxt,"%.5g",Val);
+       if (fmin == 0.0) strcpy(mintxt,"0"); else snprintf(mintxt, 39, mmform, fmin);
+       if (fmax == 0.0) strcpy(maxtxt,"0"); else snprintf(maxtxt, 39, mmform, fmax);
+       snprintf(xtxt, 39, format,  Time);
+       snprintf(ytxt, 39, "%.5g",Val);
 
        fprintf(file, "@ WITH G%d\n", graph_id);
        fprintf(file, "@ G%d ON\n", graph_id);       
        fprintf(file, "@ subtitle \"%s at %s (min=%s max=%s)\"\n", ytxt, xtxt, mintxt, maxtxt);
 
        dy = format_double(y0, y1, XMGR_DIVISIONS, 2, mmform);
-       sprintf(mintxt, mmform, y0);
-       sprintf(maxtxt, mmform, y1);
+       snprintf(mintxt, 39, mmform, y0);
+       snprintf(maxtxt, 39, mmform, y1);
        fprintf(file, "@ world ymin %s\n", mintxt);
        fprintf(file, "@ world ymax %s\n", maxtxt);
        fprintf(file, "@ yaxis tick major %g\n", dy);
@@ -1830,16 +1832,16 @@ int    digits = 0, digitsBase = 0, zeros;
 
    if (dx < 1) {
      zeros = base < 1 ? digitsBase - 1 : 0;
-     if (zeros <= maxzeros) sprintf(sigdig, "%df", digits + sigdigits - 1);
-     else sprintf(sigdig, "%de", digits + sigdigits - zeros - 2);
+     if (zeros <= maxzeros) snprintf(sigdig, 19, "%df", digits + sigdigits - 1);
+     else                   snprintf(sigdig, 19, "%de", digits + sigdigits - zeros - 2);
    } 
    else {
      zeros = digits - sigdigits;
      if (zeros <= maxzeros) {
         int afterDec =  zeros < 0 ? -zeros : 0 ;
-        sprintf(sigdig, "%df", afterDec);
+        snprintf(sigdig, 19, "%df", afterDec);
      }
-     else sprintf(sigdig, "%de", digitsBase - zeros - 1); 
+     else snprintf(sigdig, 19, "%de", digitsBase - zeros - 1); 
    }
 
   strcat(fstr, sigdig);
@@ -1923,7 +1925,7 @@ int    grid;
 
   void RunStatusString::update(char c)
   {
-    size_t i;
+    int i;
 
 	double newTime = double( clock() / CLOCKS_PER_SEC );
 
@@ -1947,13 +1949,13 @@ int    grid;
      }
 
 	if (extraStr) 
-      sprintf(wholeStr," [%s] (%d %%) %s=%.6g, %s=%.3g       ", widgetStr, int(100*(*timePtr-t0)/total + 0.5), 
+      snprintf(wholeStr, 2047, " [%s] (%d %%) %s=%.6g, %s=%.3g       ", widgetStr, int(100*(*timePtr-t0)/total + 0.5), 
 	 	          timeStr, *timePtr, extraStr, *extraPtr);
     else if (timePtr) 
-       sprintf(wholeStr," [%s] (%d %%) %s=%.6g       ", widgetStr, int(100*(*timePtr-t0)/total + 0.5),
+       snprintf(wholeStr, 2047, " [%s] (%d %%) %s=%.6g       ", widgetStr, int(100*(*timePtr-t0)/total + 0.5),
                           timeStr, *timePtr ); 
     else
-       sprintf(wholeStr,"%s", widgetStr);    
+       snprintf(wholeStr, 2047, "%s", widgetStr);    
 
     fprintf(stderr,"%s",wholeStr); 
 	fflush(stderr);
@@ -2050,7 +2052,7 @@ int    grid;
 	  double   SimTime = SO.totalSimTime;
 	  int      vcount = 0;  // counter for the verbose comment print
 
-	  count = plot_num = count = 0;
+	  count = plot_num = 0;
 	  gl_on = 0;
 	  array = NULL;
 
@@ -2132,7 +2134,7 @@ int    grid;
 					  if (params->token_count("plot.print") || equal(ptype, "mute"))
 					  {
 						  if (equal(ptype, "mute")) params->line_string(POS + 1, fileName);
-						  else sprintf(fileName, "%s%s", prefix, VarID);
+						  else snprintf(fileName, 2047, "%s%s", prefix, VarID);
 						  array[count++] = new MutePointPlot(kin_ptr, time_ptr, log_plot, SimTime, fileName, VarID);
 					  }
 				  }  //@@@@@@@@@@@@@@@@@  END SET CYCLE OVER POINT PLOT SETS @@@@@@@@@@@@@@@@@@@
@@ -2164,7 +2166,7 @@ int    grid;
 						  }
 						  array[count] = new MutePlot2D(field, log_plot, dir, coord1, tt, fileName);
 						  if (!equal(ptype, "2D.mute")) {
-							  sprintf(fileName, "%s%s", prefix, array[count]->win_title);
+							  snprintf(fileName, 2047, "%s%s", prefix, array[count]->win_title);
 							  strcpy(((MutePlot2D*)array[count])->fileName, fileName);
 						  }
 						  count++;
@@ -2224,7 +2226,7 @@ int    grid;
 						  if (equal(ptype, "1D.mute"))   params->line_string(POS + 1, fileName); //params->get_string( POS+1, fileName );
 						  array[count] = new MutePlot1D(field, log_plot, dir, coord1, coord2, SimTime, fileName); // Use class constructor to create fileName
 						  if (!equal(ptype, "1D.mute")) {
-							  sprintf(fileName, "%s%s", prefix, array[count]->win_title);
+							  snprintf(fileName, 2047, "%s%s", prefix, array[count]->win_title);
 							  strcpy(((MutePlot1D*)array[count])->fileName, fileName);
 						  }
 						  count++;

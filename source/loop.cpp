@@ -172,7 +172,7 @@ LoopObj::LoopObj(TokenString &TS, VectorObj *res) : num( TS.token_count(LOOP_TOK
   for (i = 0; i < result->size; i++) 
     {
     if (VERBOSE) fprintf(stderr, "    tracking variable #%d: %s\n", i+1, trackIDs[i]);
-    sprintf(filename,"%s%s", prefix, trackIDs[i]);
+    snprintf(filename, 255, "%s%s", prefix, trackIDs[i]);
 
     if ( plots->method == METHOD_MUTE )
       plots->set_plot( new MutePointPlot( (*result)()+i, xPtr, 0, xMax, filename, trackIDs[i]) );
@@ -240,9 +240,9 @@ void LoopObj::step() {
     {       
     var[i] = var0[i] + index[i] * dvar[i];
     if (tp[i] == 'i')
-      sprintf(temp, "%s = %d", ids[i], int(var[i] + 0.5) );
+      snprintf(temp, 1023, "%s = %d", ids[i], int(var[i] + 0.5) );
     else
-      sprintf(temp, "%s = %g", ids[i], var[i] );
+      snprintf(temp, 1023, "%s = %g", ids[i], var[i] );
 
     strcat( loopVarString, temp );
     if ( i < num - 1 ) strcat( loopVarString, "; " );

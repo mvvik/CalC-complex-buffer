@@ -220,8 +220,8 @@ void  VectorObj::print(int n) const
 {
         char s1[20], s2[20];
 
-        strcpy(s1,"%.");
-        sprintf(s2,"%d",n);
+        strcpy(s1, "%.");
+        snprintf(s2, 19, "%d",n);
         strcat(s1,s2);
         strcat(s1,"g ");
 
