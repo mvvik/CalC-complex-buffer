@@ -37,10 +37,14 @@ VPATH = . : $D
 
 flags = ${CXXFLAGS}
 
-# NOTE: Linker directive below is specific to Mac OS X
-# ...Change it depending on how you install GLUT/FreeGlut
+# NOTE: Linker directives below apply if you have GLUT/FreeGlut installed:
+#      (which is installed by default but depricated on all macOS machines)  
 
-llibs = -lm -framework OpenGL -framework GLUT ${LDFLAGS} 
+ifeq ($(shell uname -s), Darwin)
+    llibs = -lm -framework OpenGL -framework GLUT ${LDFLAGS}
+else
+    llibs = -lm -lGL -lGLU -lglut ${LDFLAGS}
+endif
 
 #if you don't want glut graphics, simply change the above line to:
 #
@@ -109,5 +113,5 @@ loop.o  :  loop.cpp loop.h fplot.h box.h field.h vector.h syntax.h gate.h table.
 	   $(CXX) $D/loop.cpp  ${flags} -c
 
 clean :
-	rm -f calc source/*.o
+		rm -f calc source/*.o
 
