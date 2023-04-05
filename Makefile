@@ -33,26 +33,23 @@
 # ************************************************************************
 
 D = source
-VPATH = . : $D 
+VPATH = . : $D  
 
-flags = ${CXXFLAGS}
-
-# NOTE: Linker directives below apply if you have GLUT/FreeGlut installed:
-#      (which is installed by default but depricated on all macOS machines)  
-
-ifeq ($(shell uname -s), Darwin)
-    llibs = -lm -framework OpenGL -framework GLUT ${LDFLAGS}
-else
-    llibs = -lm -lGL -lGLU -lglut ${LDFLAGS}
-endif
-
-#if you don't want glut graphics, simply change the above line to:
-#
-# llibs = -lm ${LDFLAGS}
-
-CXXFLAGS = -O2 -g -pipe -Wall -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 \
+flagsNormal = -O2 -g -pipe -Wall -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 \
 -Wp,-D_GLIBCXX_ASSERTIONS -fexceptions -fstack-protector-strong  \
 -grecord-gcc-switches -m64 -mtune=generic -fasynchronous-unwind-tables
+
+flagsNoGlut = -O2 -g -pipe -Wall -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 \
+-Wp,-D_GLIBCXX_ASSERTIONS -Wp,-D_NO_GLUT_ -fexceptions -fstack-protector-strong  \
+-grecord-gcc-switches -m64 -mtune=generic -fasynchronous-unwind-tables
+
+ifeq ($(shell uname -s), Darwin)
+    libsNormal = -lm -framework OpenGL -framework GLUT ${LDFLAGS}
+else
+    libsNormal = -lm -lGL -lGLU -lglut ${LDFLAGS}
+endif
+
+libsNoGlut = -lm ${LDFLAGS}
 
 CXX = g++
 
@@ -64,11 +61,24 @@ includes = PlatformSpecific.h box.h vector.h field.h fplot.h syntax.h \
 
 sources  = CalC.cpp box.cpp vector.cpp field.cpp fplot.cpp syntax.cpp \
            table.cpp peak.cpp interpol.cpp loop.cpp grid.cpp simulation.cpp markov.cpp
-
-CalC:   moveobjects ${objects} ${includes} ${sources} 
+		
+CalC:   moveobjects setNormal ${objects} ${includes} ${sources} 
 	   $(CXX) $D/CalC.cpp ${objects} ${llibs} ${flags} -o CalC
 	   -mv *o source/
 	   echo '*** Compilation completed successfully ***'
+	   
+noGraphs: moveobjects setNoGraphs ${objects} ${includes} ${sources} 
+	   $(CXX) $D/CalC.cpp ${objects} ${llibs} ${flagsNoGlut} -o CalC
+	   -mv *o source/
+	   echo '*** Compilation completed successfully ***'
+
+setNoGraphs:
+		$(eval flags = $(flagsNoGlut))
+		$(eval llibs = $(libsNoGlut))
+	   
+setNormal:
+		$(eval flags = $(flagsNormal))
+		$(eval llibs = $(libsNormal))
 
 moveobjects: 
 	   -mv source/*o ./
