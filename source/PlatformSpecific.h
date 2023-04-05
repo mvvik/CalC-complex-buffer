@@ -13,9 +13,8 @@
  *
  ************************************************************************/
 
-//  If you have GLUT library properly installed, delete the line below
-//  and make sure the "include" directive and linker options in Makefile 
-//  are correct
+//  If GLUT library is NOT installed, uncomment the following line:
+// (or use an alternative makefile target: "make noGraphs")
 
 // #define _NO_GLUT_
 
@@ -31,8 +30,6 @@
     #ifdef __APPLE__
       #include <OpenGL/glu.h>
       #include <GLUT/GLUT.h>
-    #else
-      #define _NO_GLUT_
     #endif
 
 #endif

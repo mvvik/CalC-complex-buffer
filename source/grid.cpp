@@ -590,9 +590,9 @@ void GridObj::initSchemePolar(int dim) {
    bc_type_num = params.token_count("bc.define") + predefined;
 
    bc_deriv = new double[bc_type_num]; bc_lin   = new double[bc_type_num];
-   bc_coef  = new double[bc_type_num]; bc_id    = new char *[bc_type_num];
-   bc_pump  = new double[bc_type_num]; bc_Kn    = new double[bc_type_num]; 
-   bc_pow   = new double[bc_type_num]; bc_const = new double[bc_type_num];
+   bc_coef  = new double[bc_type_num]; bc_id    = new char *[bc_type_num];  bc_const = new double[bc_type_num];
+   bc_pump  = new double[bc_type_num]; bc_Kn    = new double[bc_type_num];  bc_pow   = new double[bc_type_num]; 
+   bc_pump2 = new double[bc_type_num]; bc_Kn2   = new double[bc_type_num];  bc_pow2  = new double[bc_type_num];
 
    char s[256];
  
@@ -602,7 +602,7 @@ void GridObj::initSchemePolar(int dim) {
 
    for (int i = 0; i < bc_type_num - predefined; i++)
      {
-     double lin = 0, deriv = 0, coef = 0, pump = 0, Kd = 0, Kdinv, power = 0;
+     double lin = 0, deriv = 0, coef = 0, pump = 0, Kd = 0, Kdinv, power = 0, pump2 = 0, Kd2 = 0, power2 = 0;
 	 int    nPars = params.tokens_to_eol(params.token_index("bc.define", i + 1) + 1);
 	 try {
 		 switch (nPars)  {
@@ -628,25 +628,35 @@ void GridObj::initSchemePolar(int dim) {
 					 break;
 			case 8:  params.trail_pars("bc.define", i+1, 's', s, 'd', &deriv, 'd', &lin, 'd', &pump, 'd', &power, 'd', &Kd, 'd', &Ca0, 'd', &CaD);
                      set_bc_type(deriv, lin, pump, power, Kd, coef, Ca0, CaD, s); 
-					 break;			
+					 break;
+			case 9:  params.trail_pars("bc.define", i+1, 's', s, 'd', &deriv, 'd', &lin, 'd', &pump, 'd', &power, 'd', &Kd, 'd', &pump2, 'd', &power2, 'd', &Kd2 );
+					deriv = fabs(deriv); lin = -fabs(lin); 
+					pump = -fabs(pump);  pump2 = -fabs(pump2);    // Signs automatically adjusted: assumed outward current
+					set_bc_type(deriv, lin, pump, power, Kd, pump2, power2, Kd2, coef, Ca0, CaD, s);
+					break;
 			default: throw makeMessage("Wrong number of arguments in bc.define");
 		 }
 	 } catch(char *str) { params.errorMessage( params.token_index("bc.define", i + 1) + 1, str); }
   
      if (VERBOSE) {
 		       fprintf(stderr, "\n### Defining boundary condition \"%s\": \n", s);
-		       double a = bc_deriv[predefined+i], b = bc_lin[predefined+i], c = bc_pump[predefined+i];
-			   double d = bc_coef [predefined+i], p = bc_pow[predefined+i], k = bc_Kn  [predefined+i];
+			   double a  = bc_deriv[predefined + i], b  = bc_lin[predefined + i],  d  = bc_coef[predefined + i]; 
+			   double c  = bc_pump[predefined + i],  p  = bc_pow[predefined + i],  k  = bc_Kn[predefined + i];
+			   double c2 = bc_pump2[predefined + i], p2 = bc_pow2[predefined + i], k2 = bc_Kn2[predefined + i];
 			   if (a == 0.0) { 
 				   fprintf(stderr, "     Dirichlet:  u - u.bgr = %g \n", d);
 				   continue;
 			   }
-			   b = b * CaD; c = c * CaD; d = d * CaD;		
+			   b = b * CaD; c = c * CaD; c2 = c2 * CaD; d = d * CaD;
 			            fprintf(stderr, "     Flux(in -> out) = ");
 			   if (b)   fprintf(stderr, "%g * (u - %g) ", -b, Ca0 );
 			   if (c) { fprintf(stderr, "+ %g * ( u^%.1g / (u^%.1g + %g) - ",  -c, p,      p, k);
 						fprintf(stderr, "%g^%.1g / (%g^%.1g + %g) ) ",        Ca0, p, Ca0, p, k); }
-			   if (!b && !c)  {
+			   if (c2) {
+				   fprintf(stderr, "+ %g * ( u^%.1g / (u^%.1g + %g) - ", -c2, p2, p2, k2);
+				   fprintf(stderr, "%g^%.1g / (%g^%.1g + %g) ) ", Ca0, p2, Ca0, p2, k2);
+			   }
+			   if (!b && !c && !c2)  {
 				   if ( !d ) fprintf(stderr, "0 (Neumann, zero flux)");
 				   else fprintf(stderr, "%g (constant flux)", d);
 			   }
@@ -657,29 +667,68 @@ void GridObj::initSchemePolar(int dim) {
  }
 
 //*****************************************************************************
+ //set_bc_type(deriv, lin, pump, power, Kd, coef, Ca0, CaD, s)
 
-   void  BCarrayObj::set_bc_type(double a, double b, double c, double p, double k, double d, double bgr, double CaD, const char *id)
+   void  BCarrayObj::set_bc_type(double a, double b, double c, double p, double k, double c2, double p2, double k2, double d, double bgr, double CaD, const char *id)
    {
    if ( fabs(a) > 1e-12 ) 
-     { b = b / a / CaD; c = c / a / CaD; d = d / a / CaD;  a = 1;  }
+     { b = b / a / CaD; c = c / a / CaD; c2 = c2 / a / CaD;  d = d / a / CaD;  a = 1;  }
    else if ( fabs(b) > 1e-12 )
-     { a = 0; c = 0; d /= b; b = 1; }  // if a = 0, then linear coefficient = 1: it's a Dirichlet b.c. 
+   {
+	   a = 0.0; c = 0.0; c2 = 0.0; d /= b; b = 1.0;
+   }  // if a = 0, then linear coefficient = 1: it's a Dirichlet b.c. 
    else throw makeMessage("One of the first two arguments to \"bc.define\" should be non-zero (a=%g, b=%g)", a, b);
    
-   bc_deriv[bc_type_count] = a;  bc_lin [bc_type_count] = b;  
-   bc_pump [bc_type_count] = c;  bc_coef[bc_type_count] = d;  
-   bc_pow  [bc_type_count] = 1;  bc_Kn  [bc_type_count] = 1;
+   bc_deriv[bc_type_count] = a;   bc_lin [bc_type_count] = b;  bc_coef[bc_type_count] = d;
+   bc_pump[bc_type_count]  = c;   bc_pow[bc_type_count]  = 1;  bc_Kn[bc_type_count]   = 1;
+   bc_pump2[bc_type_count] = c2;  bc_pow2[bc_type_count] = 1;  bc_Kn2[bc_type_count]  = 1;
+
    bc_const[bc_type_count] = d + bgr * b;
 
-   if ( fabs(c) > 0.0 )  {
-        if (p < 1)         throw makeMessage("Pump non-linearity exponent should be greater than 1 (p=%g < 1)", p );
-		if (k <= 1e-6*bgr) throw makeMessage("Pump affinity should be non-negligible (Kd=%g too small)", k );
-		bc_pow  [bc_type_count] = p;  bc_Kn  [bc_type_count] = pow(k,p);
-		bc_const[bc_type_count] = d + bgr * ( b + c * pow(bgr, p-1) / ( pow(bgr, p) + pow(k, p) ) );
+   if ( fabs(c) > 0.0 || fabs(c2) > 0.0 )  {
+	    if (p  < 1)         throw makeMessage("Pump non-linearity exponent should be greater than 1 (p = %g < 1)",  p );
+	    if (p2 < 1)         throw makeMessage("Pump non-linearity exponent should be greater than 1 (p2 = %g < 1)", p2);
+		if (k  <= 1e-6*bgr) throw makeMessage("Pump affinity should be non-negligible (Kd = %g too small)",  k );
+		if (k2 <= 1e-6*bgr) throw makeMessage("Pump affinity should be non-negligible (Kd2 = %g too small)", k2);
+		bc_pow  [bc_type_count] = p;  bc_Kn [bc_type_count] = pow(k,  p );
+		bc_pow2[bc_type_count]  = p2; bc_Kn2[bc_type_count] = pow(k2, p2);
+		bc_const[bc_type_count] = d + bgr * ( b + c * pow(bgr, p-1) / ( pow(bgr, p) + pow(k, p) ) + c2 * pow(bgr, p2 - 1) / (pow(bgr, p2) + pow(k2, p2)));
    }
 
    bc_id[bc_type_count] = StrCpy(id);
    bc_type_count ++;
+   }
+
+   //*****************************************************************************
+ //set_bc_type(deriv, lin, pump, power, Kd, coef, Ca0, CaD, s)
+
+   void  BCarrayObj::set_bc_type(double a, double b, double c, double p, double k, double d, double bgr, double CaD, const char* id)
+   {
+	   if (fabs(a) > 1e-12)
+	   {
+		   b = b / a / CaD; c = c / a / CaD; d = d / a / CaD;  a = 1;
+	   }
+	   else if (fabs(b) > 1e-12)
+	   {
+		   a = 0; c = 0; d /= b; b = 1;
+	   }  // if a = 0, then linear coefficient = 1: it's a Dirichlet b.c. 
+	   else throw makeMessage("One of the first two arguments to \"bc.define\" should be non-zero (a=%g, b=%g)", a, b);
+
+	   bc_deriv[bc_type_count] = a;   bc_lin[bc_type_count] = b;  bc_coef[bc_type_count] = d;
+	   bc_pump[bc_type_count]  = c;   bc_pow[bc_type_count] = 1;  bc_Kn[bc_type_count] = 1;
+	   bc_pump2[bc_type_count] = 0.0; bc_pow2[bc_type_count] = 1;  bc_Kn2[bc_type_count] = 1;
+
+	   bc_const[bc_type_count] = d + bgr * b;
+
+	   if (fabs(c) > 0.0) {
+		   if (p < 1)         throw makeMessage("Pump non-linearity exponent should be greater than 1 (p=%g < 1)", p);
+		   if (k <= 1e-6 * bgr) throw makeMessage("Pump affinity should be non-negligible (Kd=%g too small)", k);
+		   bc_pow[bc_type_count] = p;  bc_Kn[bc_type_count] = pow(k, p);
+		   bc_const[bc_type_count] = d + bgr * (b + c * pow(bgr, p - 1) / (pow(bgr, p) + pow(k, p)));
+	   }
+
+	   bc_id[bc_type_count] = StrCpy(id);
+	   bc_type_count++;
    }
 
 //*****************************************************************************
@@ -697,9 +746,10 @@ void GridObj::initSchemePolar(int dim) {
    void  BCarrayObj::set_bc_types(int n)
    {
    bc_type_num = n;
-   bc_deriv = new double[n]; bc_lin = new double[n];
-   bc_pow   = new double[n]; bc_Kn  = new double[n];
-   bc_pump  = new double[n]; bc_id  = new char *[n];
+   bc_deriv = new double[n];  bc_lin = new double[n];
+   bc_pow   = new double[n];  bc_Kn  = new double[n]; bc_pump  = new double[n]; 
+   bc_pow2  = new double[n];  bc_Kn2 = new double[n]; bc_pump2 = new double[n];
+   bc_id    = new char *[n];
    bc_const = new double[n]; 
    }
 
@@ -709,8 +759,10 @@ void GridObj::initSchemePolar(int dim) {
    {
    for (int i = 0; i < bc_type_num; i++) delete bc_id[i];
 
-   delete [] bc_deriv; delete [] bc_lin; 
-   delete [] bc_coef;  delete [] bc_id;
+   delete [] bc_deriv; delete [] bc_lin;  delete [] bc_coef;  delete [] bc_id;
+
+   delete[] bc_pump;  delete[] bc_Kn;  delete[] bc_pow;
+   delete[] bc_pump2; delete[] bc_Kn2; delete[] bc_pow2;
 
    bc_type_count = 0;  // reset the static counter in set_bc_type
    }

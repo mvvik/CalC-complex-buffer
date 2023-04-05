@@ -91,7 +91,7 @@ LoopObj::LoopObj(TokenString &TS, VectorObj *res) : num( TS.token_count(LOOP_TOK
   }                                // ***  Below this line: only if "for" loop present ****
 
   char prefix[256], filename[256];
-  double v0, v1, dv = 1.0;
+  double v0 = 0.0, v1, dv = 1.0;
   int i;
 
   strcpy(prefix, "");

@@ -74,8 +74,9 @@ double *FieldObj::dxplus = 0,   *FieldObj::dxminus = 0, *FieldObj::dvx = 0;
 double *FieldObj::dyplus = 0,   *FieldObj::dyminus = 0, *FieldObj::dvy = 0;
 double *FieldObj::dzplus = 0,   *FieldObj::dzminus = 0, *FieldObj::dvz = 0;
   
-double *FieldObj::bc_deriv = 0, *FieldObj::bc_coef = 0, *FieldObj::bc_pump  = 0, *FieldObj::bc_lin = 0;
-double *FieldObj::bc_Kn    = 0, *FieldObj::bc_pow  = 0, *FieldObj::bc_const = 0;
+double *FieldObj::bc_deriv = 0, *FieldObj::bc_lin = 0,  *FieldObj::bc_coef = 0, *FieldObj::bc_const = 0;
+double *FieldObj::bc_Kn    = 0, *FieldObj::bc_pow  = 0, *FieldObj::bc_pump = 0;
+double *FieldObj::bc_Kn2   = 0, *FieldObj::bc_pow2 = 0, *FieldObj::bc_pump2 = 0;
 
 char  **FieldObj::bc_id       = 0;
 int     FieldObj::bc_type_num = 0;
@@ -106,9 +107,9 @@ void FieldObj::setStaticData(RegionObj &RO, GridObj &GO, BCarrayObj &BCO) {
   
   BCarray  = &BCO;          bc_type_num = BCO.bc_type_num;  
   bc_id    = BCO.bc_id;     bc_const    = BCO.bc_const;
-  bc_deriv = BCO.bc_deriv;  bc_coef     = BCO.bc_coef;  
-  bc_lin   = BCO.bc_lin;    bc_pump     = BCO.bc_pump;
-  bc_Kn    = BCO.bc_Kn;     bc_pow      = BCO.bc_pow;  
+  bc_deriv = BCO.bc_deriv;   bc_coef     = BCO.bc_coef;   bc_lin  = BCO.bc_lin;
+  bc_pump  = BCO.bc_pump;    bc_Kn       = BCO.bc_Kn;     bc_pow  = BCO.bc_pow;
+  bc_pump2 = BCO.bc_pump2;   bc_Kn2      = BCO.bc_Kn2;    bc_pow2 = BCO.bc_pow2;
 
   int max = ( xsize > ysize ? xsize : ysize );
   if (zsize > max) max = zsize;
@@ -1713,7 +1714,7 @@ void FieldObj::nablaX(long i, int ix, long bcvar, double &minus, double &center,
 	     coef = 2 * minus * (bc_coef[bc] + bgr);
 		 center -= minus;
 	  } else {
-	    bdx2 = 0.5 * xgrid[ix] * (bc_lin[bc] + bc_pump[bc] * pow(elem[i], bc_pow[bc]-1) / (bc_Kn[bc] + pow(elem[i], bc_pow[bc]) ) );
+	    bdx2 = 0.5 * xgrid[ix] * (bc_lin[bc] + bc_pump[bc] * pow(elem[i], bc_pow[bc]-1) / (bc_Kn[bc] + pow(elem[i], bc_pow[bc]) ) + bc_pump2[bc] * pow(elem[i], bc_pow2[bc] - 1) / (bc_Kn2[bc] + pow(elem[i], bc_pow2[bc])) );
         center = -plus + minus * 2 * bdx2 / (1 - bdx2);
 		coef   = -minus * xgrid[ix] * bc_const[bc] / (1 - bdx2);
       }
@@ -1724,7 +1725,7 @@ void FieldObj::nablaX(long i, int ix, long bcvar, double &minus, double &center,
 	     coef = 2 * plus * (bc_coef[bc] + bgr);
 		 center -= plus;
 	  } else {
- 	    bdx2 = 0.5 * xgrid[ix+1] * (bc_lin[bc] + bc_pump[bc] * pow(elem[i], bc_pow[bc]-1) / (bc_Kn[bc] + pow(elem[i], bc_pow[bc]) ) );
+ 	    bdx2 = 0.5 * xgrid[ix+1] * (bc_lin[bc] + bc_pump[bc] * pow(elem[i], bc_pow[bc]-1) / (bc_Kn[bc] + pow(elem[i], bc_pow[bc]) ) + bc_pump2[bc] * pow(elem[i], bc_pow2[bc] - 1) / (bc_Kn2[bc] + pow(elem[i], bc_pow2[bc])) );
 		center = -minus + plus * 2 * bdx2 / (1 - bdx2);
 		coef   = -plus * xgrid[ix+1] * bc_const[bc] / (1 - bdx2);
       }
@@ -1750,7 +1751,7 @@ void FieldObj::nablaY(long i, int iy, long bcvar, double &minus, double &center,
 	     coef = 2 * minus * (bc_coef[bc] + bgr);
 		 center -= minus;
 	  } else {
-	    bdx2 = 0.5 * h * ygrid[iy] * (bc_lin[bc] + bc_pump[bc] * pow(elem[i], bc_pow[bc]-1) / (bc_Kn[bc] + pow(elem[i], bc_pow[bc]) ) );
+	    bdx2 = 0.5 * h * ygrid[iy] * (bc_lin[bc] + bc_pump[bc] * pow(elem[i], bc_pow[bc]-1) / (bc_Kn[bc] + pow(elem[i], bc_pow[bc]) ) + bc_pump2[bc] * pow(elem[i], bc_pow2[bc] - 1) / (bc_Kn2[bc] + pow(elem[i], bc_pow2[bc])) );
         center = -plus + minus * 2 * bdx2 / (1 - bdx2);
 		coef   = -minus * h * ygrid[iy] * bc_const[bc] / (1 - bdx2);
       }
@@ -1761,7 +1762,7 @@ void FieldObj::nablaY(long i, int iy, long bcvar, double &minus, double &center,
 	     coef = 2 * plus * (bc_coef[bc] + bgr);
 		 center -= plus;
 	  } else {
- 	    bdx2 = 0.5 * h * ygrid[iy+1] * (bc_lin[bc] + bc_pump[bc] * pow(elem[i], bc_pow[bc]-1) / (bc_Kn[bc] + pow(elem[i], bc_pow[bc]) ) );
+ 	    bdx2 = 0.5 * h * ygrid[iy+1] * (bc_lin[bc] + bc_pump[bc] * pow(elem[i], bc_pow[bc]-1) / (bc_Kn[bc] + pow(elem[i], bc_pow[bc]) ) + bc_pump2[bc] * pow(elem[i], bc_pow2[bc] - 1) / (bc_Kn2[bc] + pow(elem[i], bc_pow2[bc])) );
         center = -minus + plus * 2 * bdx2 / (1 - bdx2);
 		coef   = -plus * h * ygrid[iy+1] * bc_const[bc] / (1 - bdx2);
       }
@@ -1788,7 +1789,7 @@ void FieldObj::nablaZ(long i, int iz, long bcvar, double &minus, double &center,
 	     coef = 2 * minus * (bc_coef[bc] + bgr);
 		 center -= minus;
 	  } else {
- 	    bdx2 = 0.5 * h * zgrid[iz] * (bc_lin[bc] + bc_pump[bc] * pow(elem[i], bc_pow[bc]-1) / (bc_Kn[bc] + pow(elem[i], bc_pow[bc]) ) );
+ 	    bdx2 = 0.5 * h * zgrid[iz] * (bc_lin[bc] + bc_pump[bc] * pow(elem[i], bc_pow[bc]-1) / (bc_Kn[bc] + pow(elem[i], bc_pow[bc]) ) + bc_pump2[bc] * pow(elem[i], bc_pow2[bc] - 1) / (bc_Kn2[bc] + pow(elem[i], bc_pow2[bc])) );
         center = -plus + minus * 2 * bdx2 / (1 - bdx2);
 		coef   = -minus * h * zgrid[iz] * bc_const[bc] / (1 - bdx2);
       }
@@ -1799,7 +1800,7 @@ void FieldObj::nablaZ(long i, int iz, long bcvar, double &minus, double &center,
 	     coef = 2 * plus * (bc_coef[bc] + bgr);
 		 center -= plus;
 	  } else {
- 	    bdx2 = 0.5 * h * zgrid[iz+1] * (bc_lin[bc] + bc_pump[bc] * pow(elem[i], bc_pow[bc]-1) / (bc_Kn[bc] + pow(elem[i], bc_pow[bc]) ) );
+ 	    bdx2 = 0.5 * h * zgrid[iz+1] * (bc_lin[bc] + bc_pump[bc] * pow(elem[i], bc_pow[bc]-1) / (bc_Kn[bc] + pow(elem[i], bc_pow[bc]) ) + bc_pump2[bc] * pow(elem[i], bc_pow2[bc] - 1) / (bc_Kn2[bc] + pow(elem[i], bc_pow2[bc])) );
 		center = -minus + plus * 2 * bdx2 / (1 - bdx2);
 		coef   = -plus * h * zgrid[iz+1] * bc_const[bc] / (1 - bdx2);
       }

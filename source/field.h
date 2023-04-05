@@ -87,7 +87,10 @@ protected:
 
 public:
 
-  static  double *bc_deriv, *bc_coef, *bc_lin, *bc_pump, *bc_pow, *bc_Kn, *bc_const;
+  static  double* bc_deriv, * bc_lin,  * bc_coef, * bc_const;
+  static  double* bc_pump,  * bc_pow,  * bc_Kn;
+  static  double* bc_pump2, * bc_pow2, * bc_Kn2;
+
   static  char   **bc_id;
   static  int    bc_type_num;
 
