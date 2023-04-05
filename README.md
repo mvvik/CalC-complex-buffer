@@ -45,9 +45,9 @@ Install XQuartz and Xcode. The latter will have a C++ compiler such as g++, and 
    
 ##### 3) Non-Mac UNIX / LINUX / CygWin
 
-Unless you have [freeglut](https://freeglut.sourceforge.net/) installed, replace **Makefile** with **Makefile.no_glut** (and remove the extension **.no_glut**). Then, run **make**, as usual. This will compile a version of the program without run-time OpenGl/GLUT/FreeGlut graphics.
+If you do not have [freeglut](https://freeglut.sourceforge.net/) installed, compile by executing **make noGraphs**. This will compile a version of the program without run-time OpenGl/GLUT/FreeGlut graphics.
 
-Alternatively, install [freeglut](https://freeglut.sourceforge.net/) and change the linker option in the **Makefile** to properly link your installation of GLUT/FreeGlut library. See also **PlatformSpecific.h** header file in the source directory.
+Alternatively, install [freeglut](https://freeglut.sourceforge.net/) and run "make" as usual.
 
 ******************************************************************************
 ### Execution (all platforms)
