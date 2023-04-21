@@ -4,7 +4,7 @@
 [<img src="https://web.njit.edu/~matveev/images/Manual_Menu_Button.jpg" height="18" />](https://web.njit.edu/~matveev/calc/manual.html)
 [<img src="https://web.njit.edu/~matveev/images/Pubs_Menu_Button.jpg" height="19" />](https://web.njit.edu/~matveev/calc/calc_pub.html)
 [<img src="https://web.njit.edu/~matveev/images/CalC_Menu_Button.jpg" height="20" />](https://web.njit.edu/~matveev/calc.html)
-- Developed by [Victor Matveev](http://www.victormatveev.org), Department of Mathematical Sciences, NJIT
+- Developed by [Victor Matveev](http://www.victormatveev.org), Department of Mathematical Sciences, NJIT (2003-2023)
 - Initial development (2001-2003): Laboratory of Biological Modeling, NIDDK, NIH
 - Version for simple buffers (one calcium-binding site) is in [this repository](https://github.com/mvvik/CalC-simple-buffer)
 - Email any bug reports (make sure to include your script) to: matveev@njit.edu
