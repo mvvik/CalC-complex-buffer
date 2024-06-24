@@ -1,4 +1,4 @@
-## Calcium Calculator (CalC) [complex-buffer version 7.x.x]
+## Calcium Calculator (CalC) [complex-buffer version 7.10.8]
 [<img src="https://web.njit.edu/~matveev/images/Demo_Menu_Button.jpg" height="20" />](https://web.njit.edu/~matveev/calc/demoScripts.html)
 [<img src="https://web.njit.edu/~matveev/images/Scripts_Menu_Button.jpg" height="20" />](https://web.njit.edu/~matveev/calc/scripts.html)
 [<img src="https://web.njit.edu/~matveev/images/Manual_Menu_Button.jpg" height="18" />](https://web.njit.edu/~matveev/calc/manual.html)
