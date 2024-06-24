@@ -56,7 +56,7 @@
 #include "time.h"
 
 double  CHARGE_LOSS;
-int     Number_Of_Iterations_Per_PDE_Step = 3;
+int     Number_Of_Iterations_Per_PDE_Step = 4;
 
 int     DIMENSIONALITY = 3;
 int     VERBOSE        = 3;
@@ -105,12 +105,12 @@ void Ca3DstepCoop(FieldObj &Ca, VectorObj &CaNew, BufferArray &Buf, BufferArray 
 void header() {
      fprintf(stderr,"\n******************************************************************");
      fprintf(stderr,"\n*                                                                *");
-     fprintf(stderr,"\n*  Calcium Calculator (CalC)  *  version 7.10.7  *  Apr 5, 2023  *");
+     fprintf(stderr,"\n* Calcium Calculator (CalC)  *  version 7.10.8  *  Jun 24, 2024  *");
      fprintf(stderr,"\n*                                                                *");
-     fprintf(stderr,"\n*                  Victor Matveev, 2001-2023                     *");
-     fprintf(stderr,"\n*   CalC is distributed under GPLv3: see attached license file   *");
+     fprintf(stderr,"\n*                  Victor Matveev, 2001-2024                     *");
+	 fprintf(stderr,"\n*   CalC is distributed under GPLv3: see attached license file   *");
      fprintf(stderr,"\n*                                                                *");
-     fprintf(stderr,"\n*  Dept of Math Sciences, New Jersey Institute of Technology     *");
+	 fprintf(stderr,"\n*  Dept of Math Sciences, New Jersey Institute of Technology     *");
      fprintf(stderr,"\n*                     and LBM, NIDDK, NIH                        *");
      fprintf(stderr,"\n*                                                                *");
      fprintf(stderr,"\n*  Supported in part by NSF DMS0417416, DMS0817703, DMS1517085   *");
@@ -645,8 +645,8 @@ void Buf1DstepCoop(BufferArray &Buf, BufferArray &BufNew, VectorObj &Ca, VectorO
 		*BufNew.array[UB] = *Buf.array[UB] % (1.0 + LinOld) + km1 * (*Buf.array[SB] + *BufNew.array[SB]);
 		Buf.array[UB]->Run1D(-nuUB, nuUB,  LinNew.elem, BufNew.array[UB]->elem);
 
-		LinNew = - kp2 * CaNew - km1 ;      // ********* Single-bound buffer block **************
-		LinOld = - kp2 * Ca    - km1 ;
+		LinNew = -kp2 * CaNew - km1 ;      // ********* Single-bound buffer block **************
+		LinOld = -kp2 * Ca    - km1 ;
 
 		*BufNew.array[SB] = *Buf.array[SB] % (1.0 + LinOld) + km2 * (*Buf.array[DB] + *BufNew.array[DB])
 						  + (0.5 * kp1) * (Ca + CaNew) % (*Buf.array[UB] + *BufNew.array[UB]);
