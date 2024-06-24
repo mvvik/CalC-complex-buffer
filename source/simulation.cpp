@@ -150,7 +150,7 @@ SimulationObj::SimulationObj(TokenString &TS) {
 
   m_dt0 = 1.0e-3; m_dtMax = 0.1; m_dtStretch = 1.03;
   m_ODEaccuracy = 2e-5;
-  m_accuracy    = 4e-4;
+  m_accuracy    = 1e-4;
   
   for (int i=1; i <= TS.token_count("Run"); i++) // make sure all "run" and "current" statements are Ok
   try { 
@@ -441,10 +441,10 @@ long SimulationObj::Adaptive(double T)  {
   
   FieldObj      oldCa(*Ca), CaNew(*Ca), CaNew2(*Ca);
   BufferArray   BufNew(*Buffers), oldBuf(*Buffers);
-  double        one, two, error, old_dt = m_dt0, dt = m_dt0;
-  int           rvalue = 0;
+  double        oneHi, twoHi, oneLo, twoLo, errorHi, errorLo, error;
+  double        old_dt = m_dt0, dt = m_dt0;
+  int           rvalue = 0, errorODE = 0;
   long          between_checks = 0, total_steps = 0, since_last_divide = 0, total_backsteps = 0;
-  int           errorODE = 0;
 
   RunStatusString *ODEstatus = 0, *status = 0;
   if (VERBOSE > 2)    status = new RunStatusString(40,"time", &(Ca->Time), T, "dt", &dt);
@@ -465,32 +465,41 @@ long SimulationObj::Adaptive(double T)  {
       Ca->evaluateCurrents();
 	  Plots->draw_all();
       
-      one   = 1e32; 
-	  two   = Ca->checkerBoardNorm(DIMENSIONALITY, Ca->xsize, Ca->xysize);
-      error = 1; 
+      oneHi = 1e32;  oneLo = 1e32;
+	  twoHi = fabs( Ca->checkerBoardNorm(DIMENSIONALITY, Ca->xsize, Ca->xysize) );
+      twoLo = fabs(Ca->gain()) + fabs(Buffers->gain());
+      error = 1;
 	  int iter = 0;
 
 	  //for (int iter = 1; iter <= Number_Of_Iterations_Per_PDE_Step; iter++) {	
-	  while ( error > m_accuracy  ||  iter < Number_Of_Iterations_Per_PDE_Step) {
+	  while ( error > m_accuracy || iter < Number_Of_Iterations_Per_PDE_Step) {
 			BufStep(*Buffers, BufNew, *Ca,      CaNew,  dt);
 			CaStep (*Ca,      CaNew,  *Buffers, BufNew, dt);
-			one = two;
-			two = CaNew.checkerBoardNorm(DIMENSIONALITY, Ca->xsize, Ca->xysize);
-			error = (two + one) == 0.0 ? 0 : fabs( 2 * (two - one) / (1 + two + one) );
-			iter ++;  total_steps ++;  
+            oneHi = twoHi; 
+            oneLo = twoLo;
+			twoHi = CaNew.checkerBoardNorm(DIMENSIONALITY, Ca->xsize, Ca->xysize);
+            twoLo = fabs(CaNew.gain()) + fabs(BufNew.gain());
+
+			errorHi = (fabs(twoHi) + fabs(oneHi)) == 0.0 ? 0 : fabs(2 * (twoHi - oneHi)) / (fabs(twoHi) + fabs(oneHi));
+            errorLo = (     twoLo  +      oneLo ) == 0.0 ? 0 : fabs(2 * (twoLo - oneLo)) / (     twoLo  +      oneLo );
+            error   = errorHi + errorLo;
+            iter ++;  total_steps ++;
 			if (iter > 1000) {
-				if (VERBOSE) fprintf(stderr, "Max PDE iteration number exceeded: rel. error = %g \n", error);
+				if (VERBOSE) fprintf(stderr, "Max PDE iteration number exceeded: rel. error = [%g, %g] \n", errorHi, errorLo);
                 break;
 			}
-			//fprintf(stderr,"iter=%d:  one=%g two=%g error=%g\n", iter, one, two, error);   
+			//fprintf(stderr,"iter=%d: o[ne=[%g, %g] two=[%g, %g] error=[%g, %g]\n", iter, oneLo, oneHi, twoLo, twoHi, errorLo, errorHi);   
 	  }
+      if (VERBOSE > 6)
+          fprintf(stderr,"\n  Iters=%d: one=[%g, %g] two=[%g, %g] error=[%g, %g]\n", iter, oneLo, oneHi, twoLo, twoHi, errorLo, errorHi);   
+
 	  *Ca = CaNew;  *Buffers = BufNew;
       //fprintf(stderr,"\n");
 
 	  Buffers->setTime( CaNew.Time = ( Ca->Time += dt ) );
 	  try { Gates->RungeKuttaAdaptive(dt, m_ODEaccuracy, 0, ODEstatus, T); }
 	  catch (char *errorMsg) { fprintf(stderr, "%s", errorMsg); errorODE = 1; break; }
-	  Plots->draw_all();
+      Plots->draw_all();
       since_last_divide ++; 
       if (status) status->update('.');
       if (VERBOSE > 6) fprintf(stderr, "\n > Adaptive step #%ld (of %ld): T=%g(%g) dt=%.3g", i, between_checks, Ca->Time, Gates->Time, dt);  
@@ -508,19 +517,24 @@ long SimulationObj::Adaptive(double T)  {
     CaStep (*Ca,      CaNew2,   *Buffers, *Buffers, 0.5*dt);  // *********** Check Accuracy
 	BufStep(*Buffers, BufNew,   *Ca,      CaNew2,   dt);
     CaStep (CaNew2,   CaNew,    *Buffers, BufNew,   0.5*dt);
-	one = CaNew.checkerBoardNorm(DIMENSIONALITY, Ca->xsize, Ca->xysize);
+	oneHi = CaNew.checkerBoardNorm(DIMENSIONALITY, Ca->xsize, Ca->xysize);
+    oneLo = fabs(CaNew.gain());
 
 	CaStep(*Ca,    CaNew,  *Buffers, *Buffers, dt);
-	two = CaNew.checkerBoardNorm(DIMENSIONALITY, Ca->xsize, Ca->xysize);
+	twoHi = CaNew.checkerBoardNorm(DIMENSIONALITY, Ca->xsize, Ca->xysize);
+    twoLo = fabs(CaNew.gain());
 
-    error = (two + one) == 0.0 ? 0 : fabs( 2 * (two - one) / (1 + two + one) ); 
+    errorHi = (fabs(twoHi) + fabs(oneHi)) == 0.0 ? 0 : fabs(2 * (twoHi - oneHi)) / (fabs(twoHi) + fabs(oneHi));
+    errorLo = (twoLo + oneLo)             == 0.0 ? 0 : fabs(2 * (twoLo - oneLo)) / (twoLo + oneLo);
+    error   = errorHi + errorLo;
 
-    if (VERBOSE > 6) fprintf(stderr,"\n > accuracy check after %ld steps: T=%g dt=%g norm=[%g, %g], error=%g ", since_last_divide, Ca->Time, dt, one, two, error);
+    if (VERBOSE > 6) 
+        fprintf(stderr,"\n > accuracy check after %ld steps: T=%g dt=%g norm=[%g, %g]:[%g, %g], error=[%g, %g] ", since_last_divide, Ca->Time, dt, oneLo, twoLo, oneHi, twoHi, errorLo, errorHi);
     
     if ( _isnan(error) || error > 2 * m_accuracy || errorODE ) { //  *********** Max Error Exceeded
        if (status)  status->update('<'); 
        if (VERBOSE > 4) {
-         fprintf(stderr,"\n*** max tolerance exceeded (err = %.2g%% > %.2g%%) \n", error*100, 2*m_accuracy*100);
+         fprintf(stderr,"\n*** max tolerance exceeded (err = [%.2g%%, %.2g%%] > %.2g%%) \n", errorHi*100, errorLo*100, 2*m_accuracy*100);
          fprintf(stderr,"\n >  Stepping back by %.3gms (to time %.6g) and halving time step to %.3ems\n", Ca->Time-oldCa.Time, oldCa.Time, dt * 0.5);
        }
        *Ca = oldCa; *Buffers = oldBuf; BufNew = oldBuf;
@@ -535,7 +549,8 @@ long SimulationObj::Adaptive(double T)  {
     else if ( error > m_accuracy ) {   //  *********** Halving the Time Step
        dt *= 0.5;
 	   if (status)  status->update('|'); 
-       if (VERBOSE > 5) fprintf(stderr, "\n# dt halved @ %ld steps: t=%gms, dt=%.2ems, error=%.2e \n", since_last_divide, Ca->Time, dt, error);
+       if (VERBOSE > 5) 
+           fprintf(stderr, "\n# dt halved @ %ld steps: t=%gms, dt=%.2ems, error=[%.2e, %.2e] \n", since_last_divide, Ca->Time, dt, errorLo, errorHi);
        since_last_divide = 0;
 	   between_checks    = 2;
        } 
@@ -554,8 +569,9 @@ long SimulationObj::Adaptive(double T)  {
 	   if (Ca->Time >= T)  rvalue = 1;
        if (status)  status->update('+');
        if (VERBOSE > 6) 
-         fprintf(stderr, "\n> Error within bounds: new time = %lg, one=%lg two=%lg error=%lg\n",Ca->Time,one,two,error);
+         fprintf(stderr, "\n> Error within bounds: new time = %lg, one=[%lg, %lg] two=[%lg, %lg] error=[%lg, %lg]\n",Ca->Time, oneLo, oneHi, twoLo, twoHi, errorLo, errorHi);
        }
+    //fprintf(stderr, "C: Chage.Loss=%g\n", CHARGE_LOSS);
     } // while 1 ************************************************************
 }
 
