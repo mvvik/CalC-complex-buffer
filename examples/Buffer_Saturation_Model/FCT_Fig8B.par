@@ -24,8 +24,6 @@
 %  the P5/P1 value at site "2".
 %==================================================================================
 
-grid 12 12
-
 path = ""                  % If running under Windows, specify here the path to the
                            % directory containing the script imported below
 file = path "FCT_main.par"
