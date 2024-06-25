@@ -108,9 +108,9 @@ void header() {
      fprintf(stderr,"\n* Calcium Calculator (CalC)  *  version 7.10.8  *  Jun 24, 2024  *");
      fprintf(stderr,"\n*                                                                *");
      fprintf(stderr,"\n*                  Victor Matveev, 2001-2024                     *");
-	 fprintf(stderr,"\n*   CalC is distributed under GPLv3: see attached license file   *");
+     fprintf(stderr,"\n*   CalC is distributed under GPLv3: see attached license file   *");
      fprintf(stderr,"\n*                                                                *");
-	 fprintf(stderr,"\n*  Dept of Math Sciences, New Jersey Institute of Technology     *");
+     fprintf(stderr,"\n*  Dept of Math Sciences, New Jersey Institute of Technology     *");
      fprintf(stderr,"\n*                     and LBM, NIDDK, NIH                        *");
      fprintf(stderr,"\n*                                                                *");
      fprintf(stderr,"\n*  Supported in part by NSF DMS0417416, DMS0817703, DMS1517085   *");
