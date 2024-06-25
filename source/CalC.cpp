@@ -70,7 +70,7 @@ char    LABEL_DIM3[4];
 
 PlotArray* GluPlotArray = NULL;
 char*      globalLabelX = NULL;
-char*      versionStr = StrCpy("7.10.7");
+char*      versionStr = StrCpy("7.10.8");
 char       scriptFileName[1024];
 
 #define EXTRA_PARAM_STRING  "; pA=5.182134 ; pi=4 atan(1) ; "
